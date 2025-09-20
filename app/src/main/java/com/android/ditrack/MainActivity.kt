@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.android.ditrack.ui.feature.screen.MapsScreen
+import com.android.ditrack.ui.feature.utils.NotificationUtil
 import com.android.ditrack.ui.theme.DitrackTheme
 import com.google.android.gms.maps.model.LatLng
 
@@ -12,6 +13,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        NotificationUtil.createNotificationChannel(this)
+
         setContent {
             DitrackTheme {
                 val busStopsDummy = listOf(
@@ -22,7 +26,8 @@ class MainActivity : ComponentActivity() {
                     LatLng(-7.058420, 110.452300),
                     LatLng(-7.060100, 110.456200),
                     LatLng(-7.063000, 110.460500),
-                    LatLng(-7.066500, 110.463800)
+                    LatLng(-7.066500, 110.463800),
+                    LatLng(-7.057581, 110.440196)
                 )
 
                 MapsScreen(
