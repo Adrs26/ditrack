@@ -27,13 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import com.android.ditrack.R
-import com.android.ditrack.ui.feature.utils.GeofenceBroadcastReceiver
-import com.android.ditrack.ui.feature.utils.GeofenceEventBus
+import com.android.ditrack.data.datastore.GeofenceTransition
+import com.android.ditrack.receiver.GeofenceBroadcastReceiver
 import com.android.ditrack.ui.feature.utils.MarkerUtil
+import com.android.ditrack.ui.feature.utils.showMessageWithToast
 import com.android.ditrack.ui.theme.SoftWhite
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
@@ -50,8 +52,13 @@ import com.google.maps.android.compose.rememberUpdatedMarkerState
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MapsScreen(
-    busStops: List<LatLng>
+    busStops: List<LatLng>,
+    geofenceTransition: GeofenceTransition,
+    busStopId: Int,
+    onResetGeofenceTransition: () -> Unit
 ) {
+    val context = LocalContext.current
+
     val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
     } else { null }
@@ -60,8 +67,11 @@ fun MapsScreen(
         rememberPermissionState(
             permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
             onPermissionResult = {
-                if (it) {
-                    notificationPermissionState?.launchPermissionRequest()
+                notificationPermissionState?.launchPermissionRequest()
+
+                if (!it) {
+                    context.getString(R.string.access_background_location_required_to_use_application_service)
+                        .showMessageWithToast(context)
                 }
             }
         )
@@ -72,6 +82,9 @@ fun MapsScreen(
         onPermissionResult = {
             if (it) {
                 backgroundLocationPermissionState?.launchPermissionRequest()
+            } else {
+                context.getString(R.string.access_fine_location_required_to_use_application_service)
+                    .showMessageWithToast(context)
             }
         }
     )
@@ -82,54 +95,46 @@ fun MapsScreen(
         }
     }
 
-    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val geofencingClient = remember { LocationServices.getGeofencingClient(context) }
 
-    var showDialog by remember { mutableStateOf(false) }
-    var busStop by remember { mutableStateOf("") }
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(busStops[0], 15f)
+        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 16f)
     }
-    val mapProperties = MapProperties(
-        isTrafficEnabled = true,
-        isMyLocationEnabled = foregroundLocationPermissionState.status.isGranted
-    )
-    val mapUiSettings = MapUiSettings(
-        compassEnabled = false,
-        zoomControlsEnabled = false,
-        myLocationButtonEnabled = false
-    )
 
     var isMapLoaded by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(isMapLoaded) {
         if (isMapLoaded) {
-//            cameraPositionState.animate(
-//                update = CameraUpdateFactory.newCameraPosition(
-//                    CameraPosition.Builder()
-//                        .target(busStops[0])
-//                        .zoom(16f)
-//                        .bearing(0f) // bus direction -> Use bearing from FusedLocationProvider
-//                        .tilt(45f) // map tilt
-//                        .build()
-//                )
-//            )
+            getCurrentLatLng(context, fusedLocationClient) { latLng ->
+                if (latLng != null) {
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 16f)
+                }
+            }
             addGeofences(context, busStops, geofencingClient)
         }
     }
 
-    LaunchedEffect(GeofenceEventBus.events) {
-        GeofenceEventBus.events.collect {
-            busStop = it
+    LaunchedEffect(geofenceTransition) {
+        if (geofenceTransition == GeofenceTransition.ENTER) {
             showDialog = true
+            onResetGeofenceTransition()
         }
     }
 
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
-        properties = mapProperties,
-        uiSettings = mapUiSettings,
+        properties = MapProperties(
+            isTrafficEnabled = true,
+            isMyLocationEnabled = foregroundLocationPermissionState.status.isGranted
+        ),
+        uiSettings = MapUiSettings(
+            compassEnabled = false,
+            zoomControlsEnabled = false,
+            myLocationButtonEnabled = false
+        ),
         onMapLoaded = { isMapLoaded = true }
     ) {
         busStops.forEach { busStop ->
@@ -162,22 +167,44 @@ fun MapsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "Anda berada di dekat halte $busStop")
+                    Text(text = "Anda berada di dekat halte $busStopId")
                 }
             }
         }
     }
 }
 
-private fun addGeofences(
+private fun getCurrentLatLng(
     context: Context,
-    busStops: List<LatLng>,
-    geofencingClient: GeofencingClient,
+    fusedLocationClient: FusedLocationProviderClient,
+    onResult: (LatLng?) -> Unit
 ) {
     if (ActivityCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION
-    ) != PackageManager.PERMISSION_GRANTED) {
+        ) != PackageManager.PERMISSION_GRANTED) {
+        return
+    }
+
+    fusedLocationClient.lastLocation
+        .addOnSuccessListener { location ->
+            if (location != null) {
+                onResult(LatLng(location.latitude, location.longitude))
+            } else {
+                onResult(null)
+            }
+        }
+}
+
+private fun addGeofences(
+    context: Context,
+    busStops: List<LatLng>,
+    geofencingClient: GeofencingClient
+) {
+    if (ActivityCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED) {
         return
     }
 
@@ -185,7 +212,7 @@ private fun addGeofences(
     busStops.forEachIndexed { index, busStop ->
         geofences.add(
             Geofence.Builder()
-                .setRequestId(index.toString())
+                .setRequestId((index + 1).toString())
                 .setCircularRegion(busStop.latitude, busStop.longitude, 500f)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)

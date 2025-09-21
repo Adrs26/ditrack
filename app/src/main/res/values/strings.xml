@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Ditrack</string>
+    <string name="access_fine_location_required_to_use_application_service">Izin lokasi diperlukan untuk menggunakan layanan aplikasi</string>
+    <string name="access_background_location_required_to_use_application_service">Izin lokasi sepanjang waktu diperlukan agar layanan aplikasi dapat berjalan di latar belakang</string>
 </resources>

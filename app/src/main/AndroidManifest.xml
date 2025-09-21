@@ -33,7 +33,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/maps_api_key" />
 
-        <receiver android:name=".ui.feature.utils.GeofenceBroadcastReceiver" />
+        <receiver android:name=".receiver.GeofenceBroadcastReceiver" />
     </application>
 
 </manifest>
