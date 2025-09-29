@@ -3,7 +3,6 @@ package com.android.ditrack.data.datastore
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.map
 
@@ -12,9 +11,7 @@ class UserSessionPreferences(private val context: Context) {
     companion object {
         private val GEOFENCE_TRANSITION_KEY = stringPreferencesKey("geofence_transition")
         private val APPLICATION_MODE_KEY = stringPreferencesKey("application_mode")
-        private val MODE_TIMESTAMP_KEY = longPreferencesKey("mode_timestamp")
         private val BUS_STOP_ID_KEY = intPreferencesKey("bus_stop_id")
-        private val BUS_ID_KEY = intPreferencesKey("bus_name")
     }
 
     val geofenceTransition = context.dataStore.data.map { preferences ->
@@ -34,16 +31,8 @@ class UserSessionPreferences(private val context: Context) {
         }
     }
 
-    val modeTimestamp = context.dataStore.data.map { preferences ->
-        preferences[MODE_TIMESTAMP_KEY] ?: 0L
-    }
-
     val busStopId = context.dataStore.data.map { preferences ->
         preferences[BUS_STOP_ID_KEY] ?: 0
-    }
-
-    val busId = context.dataStore.data.map { preferences ->
-        preferences[BUS_ID_KEY] ?: 0
     }
 
     suspend fun setGeofenceTransition(transition: GeofenceTransition) {
@@ -58,21 +47,15 @@ class UserSessionPreferences(private val context: Context) {
         }
     }
 
-    suspend fun setModeTimestamp(timestamp: Long) {
-        context.dataStore.edit { preferences ->
-            preferences[MODE_TIMESTAMP_KEY] = timestamp
-        }
-    }
-
     suspend fun setBusStopId(id: Int) {
         context.dataStore.edit { preferences ->
             preferences[BUS_STOP_ID_KEY] = id
         }
     }
 
-    suspend fun setBusName(name: Int) {
+    suspend fun clearData() {
         context.dataStore.edit { preferences ->
-            preferences[BUS_ID_KEY] = name
+            preferences.clear()
         }
     }
 }

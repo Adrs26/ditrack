@@ -47,8 +47,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver(), KoinComponent {
                         }
                     }
                     Geofence.GEOFENCE_TRANSITION_EXIT -> {
+                        userSessionPrefs.setGeofenceTransition(GeofenceTransition.EXIT)
                         if (currentMode == ApplicationMode.WAITING) {
-                            userSessionPrefs.setGeofenceTransition(GeofenceTransition.EXIT)
                             NotificationUtil.sendNotification(
                                 context,
                                 "Halte tidak terdeteksi",

@@ -1,15 +1,21 @@
 package com.android.ditrack.ui.theme
 
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
-
 val SoftWhite = Color(0xFFF8FCFB)
-val GoogleBlue = Color(0xFF4285F4)
-val Amber = Color(0xFFFFA500)
+val SoftBlack = Color(0xFF1E1E1E)
+val Blue800 = Color(0xFF1565C0)
+val Charcoal = Color(0xFF36454F)
+
+val LightColorScheme = lightColorScheme(
+    primary = Blue800,
+    secondary = Charcoal,
+    tertiary = Color.LightGray,
+    background = SoftWhite,
+    surface = SoftWhite,
+    onPrimary = SoftWhite,
+    onBackground = SoftBlack,
+    onSurface = SoftBlack,
+    outline = Color.Gray,
+)

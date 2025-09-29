@@ -1,4 +1,4 @@
-package com.android.ditrack
+package com.android.ditrack.ui.feature.screen
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -6,14 +6,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.android.ditrack.ui.feature.screen.MapsScreen
-import com.android.ditrack.ui.feature.screen.MapsViewModel
+import com.android.ditrack.ui.feature.screen.maps.MapsScreen
+import com.android.ditrack.ui.feature.screen.maps.MapsViewModel
 import com.android.ditrack.ui.feature.utils.NotificationUtil
 import com.android.ditrack.ui.theme.DitrackTheme
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.maps.model.LatLng
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -35,14 +37,16 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val viewModel = koinViewModel<MapsViewModel>()
+                val applicationMode by viewModel.applicationMode.collectAsStateWithLifecycle()
                 val geofenceTransition by viewModel.geofenceTransition.collectAsStateWithLifecycle()
                 val busStopId by viewModel.busStopId.collectAsStateWithLifecycle()
 
                 MapsScreen(
                     busStops = busStopsDummy,
+                    applicationMode = applicationMode,
                     geofenceTransition = geofenceTransition,
                     busStopId = busStopId,
-                    onResetGeofenceTransition = viewModel::resetGeofenceTransition
+                    onModeChange = viewModel::changeMode
                 )
             }
         }

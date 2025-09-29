@@ -1,6 +1,6 @@
 package com.android.ditrack.di
 
-import com.android.ditrack.ui.feature.screen.MapsViewModel
+import com.android.ditrack.ui.feature.screen.maps.MapsViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 

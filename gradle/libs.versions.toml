@@ -11,7 +11,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
 composeBom = "2025.09.00"
-mapsCompose = "6.10.0"
+mapsCompose = "6.11.0"
 playServicesLocation = "21.3.0"
 playServicesMaps = "19.2.0"
 
