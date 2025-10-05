@@ -8,11 +8,13 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.android.ditrack.R
+import com.android.ditrack.data.datastore.ApplicationMode
+import com.android.ditrack.domain.repository.UserSessionRepository
+import com.android.ditrack.ui.feature.utils.NotificationUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,20 +23,23 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class LocationTrackingService : Service() {
+class LocationTrackingService : Service(), KoinComponent {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val channelId = "tracking_channel"
     private val channelName = "Tracking Bus Channel"
     private val notificationId = 1
 
+    private val userSessionRepository by inject<UserSessionRepository>()
+
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onCreate() {
         super.onCreate()
         createTrackingNotificationChannel()
         startForeground(notificationId, buildTrackingNotification(0, "20.15"))
-        Log.d("ForegroundLocationService", "onCreate()")
 
         serviceScope.launch {
             var progress = 1
@@ -44,7 +49,14 @@ class LocationTrackingService : Service() {
                 }
                 progress++
                 delay(1000)
-                if (progress > 100) break
+                if (progress > 10) {
+                    NotificationUtil.sendNotification(
+                        this@LocationTrackingService,
+                        "Perjalanan selesai",
+                        "Anda telah sampai halte tujuan"
+                    )
+                    break
+                }
             }
         }
     }
@@ -52,8 +64,8 @@ class LocationTrackingService : Service() {
     override fun onBind(p0: Intent?): IBinder? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        serviceScope.launch { userSessionRepository.setApplicationMode(ApplicationMode.DEFAULT) }
         stopSelf()
-        Log.d("ForegroundLocationService", "onTaskRemoved()")
         super.onTaskRemoved(rootIntent)
     }
 
@@ -65,7 +77,6 @@ class LocationTrackingService : Service() {
             @Suppress("DEPRECATION")
             stopForeground(true)
         }
-        Log.d("ForegroundLocationService", "onDestroy()")
         super.onDestroy()
     }
 

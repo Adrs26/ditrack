@@ -6,19 +6,21 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.android.ditrack.receiver.GeofenceBroadcastReceiver
+import com.android.ditrack.service.LocationTrackingService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.maps.model.LatLng
 
-object MapsUtil {
-    fun getCurrentLatLng(
-        context: Context,
-        fusedLocationClient: FusedLocationProviderClient,
-        onResult: (LatLng?) -> Unit
-    ) {
+class MapsManager(
+    private val context: Context,
+    private val fusedLocationClient: FusedLocationProviderClient,
+    private val geofencingClient: GeofencingClient
+) {
+    fun getUserCurrentLocation(onResult: (LatLng?) -> Unit) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -26,21 +28,16 @@ object MapsUtil {
             return
         }
 
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location ->
-                if (location != null) {
-                    onResult(LatLng(location.latitude, location.longitude))
-                } else {
-                    onResult(null)
-                }
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                onResult(LatLng(location.latitude, location.longitude))
+            } else {
+                onResult(null)
             }
+        }
     }
 
-    fun addGeofences(
-        context: Context,
-        busStops: List<LatLng>,
-        geofencingClient: GeofencingClient
-    ) {
+    fun addGeofences(busStops: List<BusStopsDummy>) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -52,10 +49,10 @@ object MapsUtil {
         busStops.forEachIndexed { index, busStop ->
             geofences.add(
                 Geofence.Builder()
-                    .setRequestId((index + 1).toString())
-                    .setCircularRegion(busStop.latitude, busStop.longitude, 100f)
+                    .setRequestId(busStop.id.toString())
+                    .setCircularRegion(busStop.latLng.latitude, busStop.latLng.longitude, 100f)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
                     .build()
             )
         }
@@ -76,5 +73,30 @@ object MapsUtil {
         }
 
         geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
+    }
+
+    fun removeGeofences(removeIds: List<Int>) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
+        if (removeIds.isEmpty()) {
+            return
+        } else {
+            geofencingClient.removeGeofences(removeIds.map { it.toString() })
+        }
+    }
+
+    fun startLocationTrackingService() {
+        val serviceIntent = Intent(context, LocationTrackingService::class.java)
+        ContextCompat.startForegroundService(context, serviceIntent)
+    }
+
+    fun stopLocationTrackingService() {
+        val serviceIntent = Intent(context, LocationTrackingService::class.java)
+        context.stopService(serviceIntent)
     }
 }

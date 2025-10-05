@@ -1,6 +1,7 @@
 package com.android.ditrack
 
 import android.app.Application
+import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.UserSessionPreferences
 import com.android.ditrack.di.appModule
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +23,7 @@ class DitrackApplication : Application() {
         }
 
         applicationScope.launch {
-            UserSessionPreferences(applicationContext).clearData()
+            UserSessionPreferences(applicationContext).setApplicationMode(ApplicationMode.DEFAULT)
         }
     }
 }

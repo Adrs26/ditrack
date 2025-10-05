@@ -1,4 +1,4 @@
-package com.android.ditrack.ui.feature.screen.maps.components
+package com.android.ditrack.ui.feature.components
 
 import android.content.Context
 import androidx.compose.foundation.layout.Box
@@ -15,9 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.android.ditrack.R
-import com.android.ditrack.data.datastore.ApplicationMode
+import com.android.ditrack.ui.feature.utils.BusStopsDummy
 import com.android.ditrack.ui.feature.utils.MarkerUtil
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -29,14 +28,14 @@ import com.google.maps.android.compose.rememberUpdatedMarkerState
 @Composable
 fun MapsContent(
     context: Context,
+    busStops: List<BusStopsDummy>,
     cameraPositionState: CameraPositionState,
     isLocationPermissionGranted: Boolean,
-    busStops: List<LatLng>,
     isMapLoaded: Boolean,
-    showSheet: Boolean,
+    isSheetVisible: Boolean,
     onMapLoaded: () -> Unit,
-    onModeChange: (ApplicationMode) -> Unit,
-    onNavigateToMyLocation: () -> Unit,
+    onAnimateToMyLocationClick: () -> Unit,
+    onStartTrackingClick: () -> Unit
 ) {
     Box {
         GoogleMap(
@@ -54,7 +53,7 @@ fun MapsContent(
             onMapLoaded = onMapLoaded
         ) {
             busStops.forEach { busStop ->
-                val markerState = rememberUpdatedMarkerState(busStop)
+                val markerState = rememberUpdatedMarkerState(busStop.latLng)
 
                 Marker(
                     state = markerState,
@@ -68,7 +67,7 @@ fun MapsContent(
         }
         if (isMapLoaded) {
             FloatingActionButton(
-                onClick = onNavigateToMyLocation,
+                onClick = onAnimateToMyLocationClick,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 48.dp, end = 16.dp)
@@ -83,9 +82,9 @@ fun MapsContent(
                 )
             }
         }
-        if (isMapLoaded && !showSheet) {
+        if (isMapLoaded && !isSheetVisible) {
             FloatingActionButton(
-                onClick = { onModeChange(ApplicationMode.WAITING) },
+                onClick = onStartTrackingClick,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),

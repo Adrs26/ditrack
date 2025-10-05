@@ -7,10 +7,11 @@ import android.util.Log
 import com.android.ditrack.DitrackApplication
 import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
-import com.android.ditrack.data.datastore.UserSessionPreferences
-import com.android.ditrack.ui.feature.utils.NotificationUtil
+import com.android.ditrack.domain.repository.UserSessionRepository
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
+import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -18,7 +19,7 @@ import org.koin.core.component.inject
 
 class GeofenceBroadcastReceiver : BroadcastReceiver(), KoinComponent {
 
-    private val userSessionPrefs: UserSessionPreferences by inject()
+    private val userSessionRepository by inject<UserSessionRepository>()
 
     override fun onReceive(context: Context, intent: Intent) {
         val geofencingEvent = GeofencingEvent.fromIntent(intent) ?: return
@@ -29,32 +30,26 @@ class GeofenceBroadcastReceiver : BroadcastReceiver(), KoinComponent {
 
         appScope.launch {
             try {
-                val currentMode = userSessionPrefs.applicationMode.first()
-                val busStopId = userSessionPrefs.busStopId.first()
+                val currentMode = userSessionRepository.getApplicationMode().first()
 
                 when (geofenceTransition) {
                     Geofence.GEOFENCE_TRANSITION_ENTER -> {
                         if (currentMode == ApplicationMode.DEFAULT) {
                             geofencingEvent.triggeringGeofences?.forEach { geofence ->
-                                userSessionPrefs.setGeofenceTransition(GeofenceTransition.ENTER)
-                                userSessionPrefs.setBusStopId(geofence.requestId.toIntOrNull() ?: 0)
+                                userSessionRepository.setGeofenceTransition(GeofenceTransition.ENTER)
+                                userSessionRepository.setBusStopId(geofence.requestId.toInt())
+                                userSessionRepository.setBusStopLocation(
+                                    LatLng(geofence.latitude, geofence.longitude)
+                                )
+                                delay(5000)
+                                userSessionRepository.setGeofenceTransition(GeofenceTransition.DWELL)
                             }
-                            NotificationUtil.sendNotification(
-                                context,
-                                "Halte terdeteksi",
-                                "Posisi anda berada di area halte bus"
-                            )
                         }
                     }
                     Geofence.GEOFENCE_TRANSITION_EXIT -> {
-                        userSessionPrefs.setGeofenceTransition(GeofenceTransition.EXIT)
-                        if (currentMode == ApplicationMode.WAITING) {
-                            NotificationUtil.sendNotification(
-                                context,
-                                "Halte tidak terdeteksi",
-                                "Anda berada di luar area halte bus $busStopId"
-                            )
-                        }
+                        userSessionRepository.setGeofenceTransition(GeofenceTransition.EXIT)
+                        userSessionRepository.setBusStopId(-1)
+                        userSessionRepository.setBusStopLocation(LatLng(0.0, 0.0))
                     }
                 }
             } catch (e: Exception) {
