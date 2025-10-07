@@ -2,7 +2,6 @@ package com.android.ditrack.ui.feature.screen
 
 import android.Manifest
 import android.os.Build
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -11,6 +10,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -29,13 +30,16 @@ import androidx.compose.ui.unit.dp
 import com.android.ditrack.R
 import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
+import com.android.ditrack.ui.common.UiState
 import com.android.ditrack.ui.feature.components.BusStopListContent
 import com.android.ditrack.ui.feature.components.ConfirmationDialog
+import com.android.ditrack.ui.feature.components.LoadingDialog
 import com.android.ditrack.ui.feature.components.MapsContent
 import com.android.ditrack.ui.feature.components.SheetContent
 import com.android.ditrack.ui.feature.components.SheetHandle
 import com.android.ditrack.ui.feature.utils.DataDummyProvider
 import com.android.ditrack.ui.feature.utils.showMessageWithToast
+import com.android.ditrack.ui.feature.utils.toMessageError
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -47,12 +51,10 @@ import kotlinx.coroutines.flow.SharedFlow
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(
-    uiState: MainUiState,
+fun MapsScreen(
     cameraUpdateEvent: SharedFlow<CameraUpdate>,
-    onLocationPermissionResult: (Boolean, Boolean) -> Unit,
-    onAnimateToMyLocationClick: () -> Unit,
-    onModeChange: (ApplicationMode) -> Unit
+    mapsUiState: MapsUiState,
+    mapsActions: MapsActions,
 ) {
     val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState {
@@ -60,11 +62,29 @@ fun MainScreen(
     }
 
     var isMapLoaded by remember { mutableStateOf(false) }
-    var isDialogVisible by remember { mutableStateOf(false) }
+    var isConfirmationDialogVisible by remember { mutableStateOf(false) }
+    var isLoadingDialogVisible by remember { mutableStateOf(false) }
     var isSheetVisible by remember { mutableStateOf(false) }
     var isBusStopListVisible by remember { mutableStateOf(false) }
 
-    Log.d("MainScreen", "uiState: $uiState")
+    val polyLinePoints = remember(mapsUiState.routeInfo) {
+        when (mapsUiState.routeInfo) {
+            is UiState.Success -> mapsUiState.routeInfo.data.polylinePoints
+            else -> emptyList()
+        }
+    }
+    val duration = remember(mapsUiState.routeInfo) {
+        when (mapsUiState.routeInfo) {
+            is UiState.Success -> mapsUiState.routeInfo.data.duration
+            else -> ""
+        }
+    }
+    val distance = remember(mapsUiState.routeInfo) {
+        when (mapsUiState.routeInfo) {
+            is UiState.Success -> mapsUiState.routeInfo.data.distance
+            else -> ""
+        }
+    }
 
     val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
@@ -73,7 +93,7 @@ fun MainScreen(
     val locationPermissionState = rememberPermissionState(
         permission = Manifest.permission.ACCESS_FINE_LOCATION,
         onPermissionResult = { isGranted ->
-            onLocationPermissionResult(isGranted, isMapLoaded)
+            mapsActions.onMapReady(isGranted, isMapLoaded)
             if (isGranted) {
                 notificationPermissionState?.launchPermissionRequest()
             } else {
@@ -82,6 +102,21 @@ fun MainScreen(
             }
         }
     )
+
+    when (mapsUiState.routeInfo) {
+        is UiState.Loading -> {
+            isLoadingDialogVisible = true
+            isSheetVisible = false
+        }
+        is UiState.Success -> {
+            isLoadingDialogVisible = false
+            isSheetVisible = true
+        }
+        else -> {
+            isLoadingDialogVisible = false
+            isSheetVisible = false
+        }
+    }
 
     LaunchedEffect(Unit) {
         cameraUpdateEvent.collect { cameraUpdate ->
@@ -93,22 +128,28 @@ fun MainScreen(
         if (!locationPermissionState.status.isGranted) {
             locationPermissionState.launchPermissionRequest()
         } else {
-            onLocationPermissionResult(true, isMapLoaded)
+            mapsActions.onMapReady(true, isMapLoaded)
         }
     }
 
-    LaunchedEffect(uiState.geofenceTransition) {
+    LaunchedEffect(mapsUiState.geofenceTransition) {
         if (
-            uiState.geofenceTransition == GeofenceTransition.ENTER &&
-            uiState.applicationMode == ApplicationMode.DEFAULT
+            mapsUiState.geofenceTransition == GeofenceTransition.ENTER &&
+            mapsUiState.applicationMode == ApplicationMode.DEFAULT
         ) {
-            isDialogVisible = true
+            isConfirmationDialogVisible = true
         }
     }
 
-    LaunchedEffect(uiState.applicationMode) {
-        if (uiState.applicationMode != ApplicationMode.DEFAULT) {
+    LaunchedEffect(mapsUiState.applicationMode) {
+        if (mapsUiState.applicationMode != ApplicationMode.DEFAULT) {
             isSheetVisible = true
+        }
+    }
+
+    LaunchedEffect(mapsUiState.routeInfo) {
+        if (mapsUiState.routeInfo is UiState.Error) {
+            mapsUiState.routeInfo.error.toMessageError().asString(context).showMessageWithToast(context)
         }
     }
 
@@ -116,11 +157,13 @@ fun MainScreen(
         BottomSheetScaffold(
             sheetContent = {
                 SheetContent(
-                    applicationMode = uiState.applicationMode,
-                    onModeChange = { newMode ->
-                        onModeChange(newMode)
-                        isSheetVisible = newMode != ApplicationMode.DEFAULT
-                    },
+                    applicationMode = mapsUiState.applicationMode,
+                    busStopOrigin = mapsUiState.busStopOriginName,
+                    busStopDestination = mapsUiState.busStopDestinationName,
+                    duration = duration,
+                    distance = distance,
+                    onExitWaiting = mapsActions::onStopWaiting,
+                    onStartDriving = mapsActions::onStartDriving,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             },
@@ -142,12 +185,13 @@ fun MainScreen(
                 isLocationPermissionGranted = locationPermissionState.status.isGranted,
                 isMapLoaded = isMapLoaded,
                 isSheetVisible = isSheetVisible,
+                polyLinePoints = polyLinePoints,
                 onMapLoaded = { isMapLoaded = true },
-                onAnimateToMyLocationClick = onAnimateToMyLocationClick,
+                onAnimateToMyLocationClick = mapsActions::onAnimateToUserLocation,
                 onStartTrackingClick = {
                     if (
-                        uiState.geofenceTransition == GeofenceTransition.ENTER ||
-                        uiState.geofenceTransition == GeofenceTransition.DWELL
+                        mapsUiState.geofenceTransition == GeofenceTransition.ENTER ||
+                        mapsUiState.geofenceTransition == GeofenceTransition.DWELL
                     ) {
                         isBusStopListVisible = true
                     } else {
@@ -165,29 +209,36 @@ fun MainScreen(
                 BusStopListContent(
                     busStops = DataDummyProvider.getBusStops(),
                     onNavigateBack = { isBusStopListVisible = false },
-                    onBusStopSelect = { onModeChange(it) }
+                    onBusStopSelect = mapsActions::onStartWaiting
                 )
             }
         }
     }
 
-    if (isMapLoaded && isDialogVisible) {
-        val busStopName = DataDummyProvider.getBusStops()
-            .firstOrNull { it.id == uiState.busStopId }?.name ?: ""
-
+    if (isMapLoaded && isConfirmationDialogVisible) {
         ConfirmationDialog(
-            icon = R.drawable.ic_departure_board,
+            icon = Icons.Default.Store,
             title = "Halte terdeteksi",
-            description = "Posisi kamu berada di area ${busStopName}. Ingin menunggu di halte ini?",
-            onDismissRequest = { isDialogVisible = false },
+            description = "Posisi kamu berada di area ${mapsUiState.busStopOriginName}. Ingin menunggu di halte ini?",
+            onDismissRequest = { isConfirmationDialogVisible = false },
             onConfirmRequest = {
-                isDialogVisible = false
+                isConfirmationDialogVisible = false
                 isBusStopListVisible = true
             }
         )
     }
 
+    if (isLoadingDialogVisible) { LoadingDialog() }
+
     BackHandler(isBusStopListVisible) {
         isBusStopListVisible = false
     }
+}
+
+interface MapsActions {
+    fun onMapReady(isGranted: Boolean, isMapLoaded: Boolean)
+    fun onAnimateToUserLocation()
+    fun onStartWaiting(destinationName: String, destinationLocation: LatLng)
+    fun onStopWaiting()
+    fun onStartDriving()
 }

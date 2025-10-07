@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun SheetRouteInformationContent(
+    originName: String,
+    destinationName: String,
+    distance: String,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -49,7 +52,7 @@ fun SheetRouteInformationContent(
                 )
             }
             Text(
-                text = "Halte Masjid LPPU",
+                text = originName,
                 modifier = Modifier
                     .padding(start = 16.dp)
                     .weight(1f),
@@ -66,7 +69,7 @@ fun SheetRouteInformationContent(
                     )
             ) {
                 Text(
-                    text = "700 m",
+                    text = distance,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.bodyLarge.copy(fontSize = 12.sp)
                 )
@@ -104,7 +107,7 @@ fun SheetRouteInformationContent(
                 )
             }
             Text(
-                text = "Halte Fakultas Sains dan Matematika",
+                text = destinationName,
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .weight(1f),

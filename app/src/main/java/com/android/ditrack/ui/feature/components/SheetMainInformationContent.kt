@@ -15,6 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.AccessTimeFilled
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DepartureBoard
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -25,16 +32,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.ditrack.R
 import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.ui.theme.Blue800
 import com.android.ditrack.ui.theme.Charcoal
 
 @Composable
 fun SheetMainInformationContent(
+    duration: String,
     applicationMode: ApplicationMode,
     modifier: Modifier = Modifier
 ) {
@@ -46,7 +53,7 @@ fun SheetMainInformationContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_schedule),
+                imageVector = Icons.Default.AccessTimeFilled,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.primary
@@ -57,7 +64,7 @@ fun SheetMainInformationContent(
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
             )
             Text(
-                text = "15 Menit",
+                text = duration,
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 14.sp)
             )
         }
@@ -69,7 +76,7 @@ fun SheetMainInformationContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             ApplicationModeIcon(
-                icon = R.drawable.ic_directions_walk,
+                icon = Icons.AutoMirrored.Filled.DirectionsWalk,
                 applicationMode = applicationMode
             )
             LinearProgress(
@@ -77,7 +84,7 @@ fun SheetMainInformationContent(
                 modifier = Modifier.weight(1f)
             )
             ApplicationModeIcon(
-                icon = R.drawable.ic_departure_board_outlined,
+                icon = Icons.Default.DepartureBoard,
                 applicationMode = applicationMode
             )
             LinearProgress(
@@ -85,7 +92,7 @@ fun SheetMainInformationContent(
                 modifier = Modifier.weight(1f)
             )
             ApplicationModeIcon(
-                icon = R.drawable.ic_directions_bus,
+                icon = Icons.Default.DirectionsBus,
                 applicationMode = applicationMode
             )
             LinearProgress(
@@ -98,7 +105,7 @@ fun SheetMainInformationContent(
                 modifier = Modifier.weight(1f)
             )
             ApplicationModeIcon(
-                icon = R.drawable.ic_store,
+                icon = Icons.Default.Store,
                 applicationMode = applicationMode
             )
         }
@@ -107,7 +114,7 @@ fun SheetMainInformationContent(
 
 @Composable
 private fun ApplicationModeIcon(
-    icon: Int,
+    icon: ImageVector,
     applicationMode: ApplicationMode,
     modifier: Modifier = Modifier
 ) {
@@ -125,14 +132,14 @@ private fun ApplicationModeIcon(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(icon),
+            imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
             tint = changeIconColor(icon, applicationMode)
         )
         if (changeIconColor(icon, applicationMode) == MaterialTheme.colorScheme.primary) {
             Icon(
-                painter = painterResource(R.drawable.ic_check_circle),
+                imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
                 modifier = Modifier
                     .size(12.dp)
@@ -177,11 +184,11 @@ private fun LinearProgress(
 }
 
 private fun changeIconColor(
-    icon: Int,
+    icon: ImageVector,
     applicationMode: ApplicationMode
 ): Color {
     return when(icon) {
-        R.drawable.ic_directions_bus -> {
+        Icons.Default.DirectionsBus -> {
             when(applicationMode) {
                 ApplicationMode.DEFAULT -> Charcoal
                 ApplicationMode.WAITING -> Charcoal
@@ -189,7 +196,7 @@ private fun changeIconColor(
                 ApplicationMode.ARRIVED -> Blue800
             }
         }
-        R.drawable.ic_store -> {
+        Icons.Default.Store -> {
             when(applicationMode) {
                 ApplicationMode.DEFAULT -> Charcoal
                 ApplicationMode.WAITING -> Charcoal

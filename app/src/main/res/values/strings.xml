@@ -1,5 +1,13 @@
 <resources>
     <string name="app_name">Ditrack</string>
     <string name="access_fine_location_required_to_use_application_service">Izin lokasi diperlukan untuk menggunakan layanan aplikasi</string>
-    <string name="access_background_location_required_to_use_application_service">Izin lokasi sepanjang waktu diperlukan agar layanan aplikasi dapat berjalan di latar belakang</string>
+    <string name="request_timeout">Request timeout</string>
+    <string name="unauthorized">Unauthorized</string>
+    <string name="conflict">Conflict</string>
+    <string name="no_internet">No internet connection</string>
+    <string name="payload_too_large">Payload too large</string>
+    <string name="server_error">Server error</string>
+    <string name="serialization_error">Serialization error</string>
+    <string name="no_route_found">No route found</string>
+    <string name="unknown_error">Unknown error</string>
 </resources>

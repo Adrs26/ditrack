@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DepartureBoard
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -12,16 +15,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.android.ditrack.R
 import com.android.ditrack.ui.feature.utils.BusStopsDummy
 import com.android.ditrack.ui.feature.utils.MarkerUtil
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +37,7 @@ fun MapsContent(
     isLocationPermissionGranted: Boolean,
     isMapLoaded: Boolean,
     isSheetVisible: Boolean,
+    polyLinePoints: List<LatLng>,
     onMapLoaded: () -> Unit,
     onAnimateToMyLocationClick: () -> Unit,
     onStartTrackingClick: () -> Unit
@@ -64,6 +69,23 @@ fun MapsContent(
                     }
                 )
             }
+
+            Marker(
+                state = rememberUpdatedMarkerState(LatLng(-7.0550504, 110.4428640)),
+                icon = MarkerUtil.createBusMarker(context, R.drawable.ic_directions_bus),
+                onClick = {
+                    // Action when marker is clicked
+                    true
+                }
+            )
+
+            if (polyLinePoints.isNotEmpty()) {
+                Polyline(
+                    points = polyLinePoints,
+                    color = MaterialTheme.colorScheme.primary,
+                    width = 10f
+                )
+            }
         }
         if (isMapLoaded) {
             FloatingActionButton(
@@ -77,7 +99,7 @@ fun MapsContent(
                 contentColor = MaterialTheme.colorScheme.secondary
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_my_location),
+                    imageVector = Icons.Default.MyLocation,
                     contentDescription = null
                 )
             }
@@ -92,7 +114,7 @@ fun MapsContent(
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_departure_board),
+                    imageVector = Icons.Default.DepartureBoard,
                     contentDescription = null
                 )
             }

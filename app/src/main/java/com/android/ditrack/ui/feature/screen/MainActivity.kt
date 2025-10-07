@@ -6,9 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.ditrack.R
 import com.android.ditrack.ui.feature.utils.NotificationUtil
 import com.android.ditrack.ui.theme.DitrackTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.android.gms.maps.model.LatLng
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -20,16 +22,48 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             DitrackTheme {
-                val viewModel = koinViewModel<MainViewModel>()
+                val viewModel = koinViewModel<MapsViewModel>()
                 val cameraUpdateEvent = viewModel.cameraUpdateEvent
-                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                val mapsUiState by viewModel.mapsUiState.collectAsStateWithLifecycle()
 
-                MainScreen(
-                    uiState = uiState,
+                val mapsActions = object : MapsActions {
+                    override fun onMapReady(isGranted: Boolean, isMapLoaded: Boolean) {
+                        viewModel.syncGeofence(
+                            isGranted = isGranted,
+                            isMapLoaded = isMapLoaded
+                        )
+                    }
+
+                    override fun onAnimateToUserLocation() {
+                        viewModel.animateToUserLocation()
+                    }
+
+                    override fun onStartWaiting(
+                        destinationName: String,
+                        destinationLocation: LatLng
+                    ) {
+                        viewModel.startWaitingMode(
+                            destinationName = destinationName,
+                            destinationLocation = destinationLocation,
+                            apiKey = getString(R.string.maps_api_key)
+                        )
+                    }
+
+                    override fun onStopWaiting() {
+                        viewModel.stopWaitingMode()
+                    }
+
+                    override fun onStartDriving() {
+                        viewModel.startDrivingMode(
+                            apiKey = getString(R.string.maps_api_key)
+                        )
+                    }
+                }
+
+                MapsScreen(
                     cameraUpdateEvent = cameraUpdateEvent,
-                    onLocationPermissionResult = viewModel::syncGeofence,
-                    onAnimateToMyLocationClick = viewModel::animateToUserLocation,
-                    onModeChange = viewModel::setApplicationMode
+                    mapsUiState = mapsUiState,
+                    mapsActions = mapsActions
                 )
             }
         }

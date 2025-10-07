@@ -29,7 +29,7 @@ object MarkerUtil {
         }
 
         val redBackground = Paint().apply {
-            color = "#F44336".toColorInt()
+            color = "#EF5350".toColorInt()
             isAntiAlias = true
         }
 
@@ -72,9 +72,76 @@ object MarkerUtil {
         val iconDrawable = ContextCompat.getDrawable(context, iconRes)
 
         iconDrawable?.let { icon ->
-            icon.setTint("#F44336".toColorInt())
+            icon.setTint("#EF5350".toColorInt())
 
             val iconSize = 48
+            val centerX = totalSize / 2
+            val centerY = totalSize / 2
+
+            val iconLeft = centerX - iconSize / 2
+            val iconTop = centerY - iconSize / 2
+            val iconRight = iconLeft + iconSize
+            val iconBottom = iconTop + iconSize
+
+            icon.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+            icon.draw(canvas)
+        }
+
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
+    }
+
+    fun createBusMarker(context: Context, iconRes: Int): BitmapDescriptor {
+        val totalSize = 70
+        val outerRectOffset = 2f
+        val outerCornerRadius = 24f
+        val innerRectSize = 50f
+        val innerRectOffset = (totalSize - innerRectSize) / 2f
+        val innerCornerRadius = 16f
+        val bitmap = createBitmap(totalSize, totalSize)
+        val canvas = Canvas(bitmap)
+
+        val whiteBackground = Paint().apply {
+            color = "#F8FCFB".toColorInt()
+            isAntiAlias = true
+        }
+
+        val grayBackground = Paint().apply {
+            color = "#36454F".toColorInt()
+            isAntiAlias = true
+        }
+
+        val outerRectF = RectF(
+            outerRectOffset,
+            outerRectOffset,
+            totalSize - outerRectOffset,
+            totalSize - outerRectOffset
+        )
+        canvas.drawRoundRect(
+            outerRectF,
+            outerCornerRadius,
+            outerCornerRadius,
+            grayBackground
+        )
+
+        val innerRectF = RectF(
+            innerRectOffset,
+            innerRectOffset,
+            innerRectOffset + innerRectSize,
+            innerRectOffset + innerRectSize
+        )
+        canvas.drawRoundRect(
+            innerRectF,
+            innerCornerRadius,
+            innerCornerRadius,
+            whiteBackground
+        )
+
+        val iconDrawable = ContextCompat.getDrawable(context, iconRes)
+
+        iconDrawable?.let { icon ->
+            icon.setTint("#36454F".toColorInt())
+
+            val iconSize = 44
             val centerX = totalSize / 2
             val centerY = totalSize / 2
 

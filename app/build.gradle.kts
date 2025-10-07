@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended.android)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.accompanist.permissions)
     implementation(libs.kotlinx.serialization.json)
@@ -74,6 +75,7 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
 
+    implementation(libs.bundles.ktor)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.koin.core)
     implementation(libs.koin.android)

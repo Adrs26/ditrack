@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,18 +31,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.android.ditrack.R
-import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.ui.feature.utils.BusStopsDummy
 import com.android.ditrack.ui.theme.SoftWhite
+import com.google.android.gms.maps.model.LatLng
 
 @Composable
 fun BusStopListContent(
     busStops: List<BusStopsDummy>,
     onNavigateBack: () -> Unit,
-    onBusStopSelect: (ApplicationMode) -> Unit
+    onBusStopSelect: (String, LatLng) -> Unit
 ) {
     var query by remember { mutableStateOf("") }
 
@@ -69,7 +68,7 @@ fun BusStopListContent(
                     busStopName = busStops[index].name,
                     modifier = Modifier
                         .clickable {
-                            onBusStopSelect(ApplicationMode.WAITING)
+                            onBusStopSelect(busStops[index].name, busStops[index].latLng)
                             onNavigateBack()
                         }
                         .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -171,7 +170,7 @@ fun BusStopListItem(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_store),
+                imageVector = Icons.Default.Store,
                 contentDescription = null,
                 tint = SoftWhite
             )

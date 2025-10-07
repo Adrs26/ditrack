@@ -22,13 +22,19 @@ import com.android.ditrack.data.datastore.ApplicationMode
 @Composable
 fun SheetContent(
     applicationMode: ApplicationMode,
-    onModeChange: (ApplicationMode) -> Unit,
+    busStopOrigin: String,
+    busStopDestination: String,
+    duration: String,
+    distance: String,
+    onStartDriving: () -> Unit,
+    onExitWaiting: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
         SheetMainInformationContent(
+            duration = duration,
             applicationMode = applicationMode
         )
         HorizontalDivider(
@@ -50,21 +56,26 @@ fun SheetContent(
                 .padding(vertical = 24.dp, horizontal = 8.dp)
         ) {
             SheetRouteInformationContent(
+                originName = busStopOrigin,
+                destinationName = busStopDestination,
+                distance = distance,
                 modifier = Modifier.padding(bottom = 48.dp)
             )
             OutlinedButton(
-                onClick = { onModeChange(ApplicationMode.DEFAULT) },
+                onClick = onExitWaiting,
                 modifier = Modifier.fillMaxWidth(),
                 border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outline)
             ) {
                 Text(
                     text = "Keluar dari mode menunggu bus",
                     modifier = Modifier.padding(vertical = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
             Button(
-                onClick = { onModeChange(ApplicationMode.DRIVING) },
+                onClick = onStartDriving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
