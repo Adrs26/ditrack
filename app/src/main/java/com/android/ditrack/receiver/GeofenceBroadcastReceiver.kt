@@ -5,14 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.android.ditrack.DitrackApplication
-import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.domain.repository.UserSessionRepository
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.maps.model.LatLng
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -26,24 +23,20 @@ class GeofenceBroadcastReceiver : BroadcastReceiver(), KoinComponent {
         if (geofencingEvent.hasError()) return
 
         val geofenceTransition = geofencingEvent.geofenceTransition
+        val triggeringGeofences = geofencingEvent.triggeringGeofences ?: return
         val appScope = (context.applicationContext as DitrackApplication).applicationScope
 
         appScope.launch {
             try {
-                val currentMode = userSessionRepository.getApplicationMode().first()
-
                 when (geofenceTransition) {
                     Geofence.GEOFENCE_TRANSITION_ENTER -> {
-                        if (currentMode == ApplicationMode.DEFAULT) {
-                            geofencingEvent.triggeringGeofences?.forEach { geofence ->
-                                userSessionRepository.setGeofenceTransition(GeofenceTransition.ENTER)
-                                userSessionRepository.setBusStopId(geofence.requestId.toInt())
-                                userSessionRepository.setBusStopLocation(
-                                    LatLng(geofence.latitude, geofence.longitude)
-                                )
-                                delay(5000)
-                                userSessionRepository.setGeofenceTransition(GeofenceTransition.DWELL)
-                            }
+                        val firstGeofence = triggeringGeofences.firstOrNull()
+                        if (firstGeofence != null) {
+                            userSessionRepository.setGeofenceTransition(GeofenceTransition.ENTER)
+                            userSessionRepository.setBusStopId(firstGeofence.requestId.toInt())
+                            userSessionRepository.setBusStopLocation(
+                                LatLng(firstGeofence.latitude, firstGeofence.longitude)
+                            )
                         }
                     }
                     Geofence.GEOFENCE_TRANSITION_EXIT -> {

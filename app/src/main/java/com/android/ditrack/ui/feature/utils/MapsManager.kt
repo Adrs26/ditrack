@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.ditrack.receiver.GeofenceBroadcastReceiver
@@ -14,6 +15,10 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MapsManager(
     private val context: Context,
@@ -37,7 +42,7 @@ class MapsManager(
         }
     }
 
-    fun addGeofences(busStops: List<BusStopsDummy>) {
+    fun addGeofences(busStops: List<BusStopDummy>) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -52,7 +57,10 @@ class MapsManager(
                     .setRequestId(busStop.id.toString())
                     .setCircularRegion(busStop.latLng.latitude, busStop.latLng.longitude, 100f)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
+                    .setTransitionTypes(
+                        Geofence.GEOFENCE_TRANSITION_ENTER or
+                        Geofence.GEOFENCE_TRANSITION_EXIT
+                    )
                     .build()
             )
         }
@@ -133,5 +141,64 @@ class MapsManager(
     fun stopLocationTrackingService() {
         val serviceIntent = Intent(context, LocationTrackingService::class.java)
         context.stopService(serviceIntent)
+    }
+
+    suspend fun getCurrentGeofenceStatus(
+        busStops: List<BusStopDummy>
+    ): Pair<Boolean, BusStopDummy> = withContext(Dispatchers.IO) {
+        try {
+            val location = getLastKnownLocation() ?: return@withContext Pair(false, BusStopDummy())
+            val userLatLng = LatLng(location.latitude, location.longitude)
+
+            val inside = busStops.firstOrNull { isInsideGeofence(userLatLng, it) }
+
+            if (inside != null) {
+                Pair(true, inside)
+            } else {
+                Pair(false, BusStopDummy())
+            }
+        } catch (_: Exception) {
+            Pair(false, BusStopDummy())
+        }
+    }
+
+    private fun getLastKnownLocation(): Location? {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED) {
+            return null
+        }
+
+        val task: Task<Location> = fusedLocationClient.lastLocation
+        return try {
+            Tasks.await(task)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun isInsideGeofence(
+        userLatLng: LatLng,
+        busStop: BusStopDummy
+    ): Boolean {
+        val distance = haversine(
+            userLatLng.latitude,
+            userLatLng.longitude,
+            busStop.latLng.latitude,
+            busStop.latLng.longitude
+        )
+        return distance <= 100f
+    }
+
+    private fun haversine(
+        userLat: Double,
+        userLng: Double,
+        busStopLat: Double,
+        busStopLng: Double
+    ): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(userLat, userLng, busStopLat, busStopLng, results)
+        return results[0]
     }
 }

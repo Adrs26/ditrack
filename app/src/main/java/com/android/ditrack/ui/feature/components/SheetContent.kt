@@ -22,8 +22,8 @@ import com.android.ditrack.data.datastore.ApplicationMode
 @Composable
 fun SheetContent(
     applicationMode: ApplicationMode,
-    busStopOrigin: String,
-    busStopDestination: String,
+    originName: String,
+    destinationName: String,
     duration: String,
     distance: String,
     onStartDriving: () -> Unit,
@@ -42,22 +42,24 @@ fun SheetContent(
             thickness = 1.dp,
             color = MaterialTheme.colorScheme.tertiary
         )
-        SheetBusInformationContent(
-            modifier = Modifier.padding(vertical = 24.dp)
-        )
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.tertiary
-        )
+        if (applicationMode == ApplicationMode.WAITING) {
+            SheetBusInformationContent(
+                modifier = Modifier.padding(vertical = 24.dp)
+            )
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 24.dp, horizontal = 8.dp)
         ) {
             SheetRouteInformationContent(
-                originName = busStopOrigin,
-                destinationName = busStopDestination,
+                originName = originName,
+                destinationName = destinationName,
                 distance = distance,
                 modifier = Modifier.padding(bottom = 48.dp)
             )

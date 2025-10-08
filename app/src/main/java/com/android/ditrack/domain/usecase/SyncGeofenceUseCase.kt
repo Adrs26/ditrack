@@ -36,5 +36,16 @@ class SyncGeofenceUseCase(
                 userSessionRepository.setBusStopLocation(LatLng(0.0, 0.0))
             }
         }
+
+        val (isInside, busStop) = mapsManager.getCurrentGeofenceStatus(DataDummyProvider.getBusStops())
+        if (isInside) {
+            userSessionRepository.setGeofenceTransition(GeofenceTransition.ENTER)
+            userSessionRepository.setBusStopId(busStop.id)
+            userSessionRepository.setBusStopLocation(busStop.latLng)
+        } else {
+            userSessionRepository.setGeofenceTransition(GeofenceTransition.EXIT)
+            userSessionRepository.setBusStopId(busStop.id)
+            userSessionRepository.setBusStopLocation(busStop.latLng)
+        }
     }
 }

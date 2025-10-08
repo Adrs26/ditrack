@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.ditrack.R
-import com.android.ditrack.ui.feature.utils.BusStopsDummy
+import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.feature.utils.MarkerUtil
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -32,7 +32,7 @@ import com.google.maps.android.compose.rememberUpdatedMarkerState
 @Composable
 fun MapsContent(
     context: Context,
-    busStops: List<BusStopsDummy>,
+    busStops: List<BusStopDummy>,
     cameraPositionState: CameraPositionState,
     isLocationPermissionGranted: Boolean,
     isMapLoaded: Boolean,

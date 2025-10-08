@@ -16,6 +16,7 @@ import com.android.ditrack.ui.feature.utils.onSuccess
 import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -85,11 +86,14 @@ class MapsViewModel(
     fun startWaitingMode(destinationName: String, destinationLocation: LatLng, apiKey: String) {
         viewModelScope.launch {
             val routeDestination = _mapsUiState.value.busStopOriginLocation
-
-            setApplicationModeUseCase(ApplicationMode.WAITING)
             setBusStopDestination(destinationName, destinationLocation)
             getRouteInfo(routeDestination, apiKey)
-            animateToUserLocation()
+
+            delay(1000)
+            if (_mapsUiState.value.routeInfo is UiState.Success) {
+                setApplicationModeUseCase(ApplicationMode.WAITING)
+                animateToUserLocation()
+            }
         }
     }
 
@@ -104,10 +108,13 @@ class MapsViewModel(
     fun startDrivingMode(apiKey: String) {
         viewModelScope.launch {
             val routeDestination = _mapsUiState.value.busStopDestinationLocation
-
-            setApplicationModeUseCase(ApplicationMode.DRIVING)
             getRouteInfo(routeDestination, apiKey)
-            animateToUserLocation()
+
+            delay(1000)
+            if (_mapsUiState.value.routeInfo is UiState.Success) {
+                setApplicationModeUseCase(ApplicationMode.DRIVING)
+                animateToUserLocation()
+            }
         }
     }
 

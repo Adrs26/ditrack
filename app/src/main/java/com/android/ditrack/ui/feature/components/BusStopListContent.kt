@@ -32,13 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.android.ditrack.ui.feature.utils.BusStopsDummy
+import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.theme.SoftWhite
 import com.google.android.gms.maps.model.LatLng
 
 @Composable
 fun BusStopListContent(
-    busStops: List<BusStopsDummy>,
+    busStops: List<BusStopDummy>,
     onNavigateBack: () -> Unit,
     onBusStopSelect: (String, LatLng) -> Unit
 ) {

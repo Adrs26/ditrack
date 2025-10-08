@@ -19,6 +19,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.android.ditrack.R
 import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
@@ -47,6 +51,7 @@ import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
@@ -57,6 +62,7 @@ fun MapsScreen(
     mapsActions: MapsActions,
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 16f)
     }
@@ -137,6 +143,7 @@ fun MapsScreen(
             mapsUiState.geofenceTransition == GeofenceTransition.ENTER &&
             mapsUiState.applicationMode == ApplicationMode.DEFAULT
         ) {
+            delay(5000)
             isConfirmationDialogVisible = true
         }
     }
@@ -153,13 +160,26 @@ fun MapsScreen(
         }
     }
 
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                mapsActions.onResumeAction(locationPermissionState.status.isGranted, isMapLoaded)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     if (locationPermissionState.status.isGranted) {
         BottomSheetScaffold(
             sheetContent = {
                 SheetContent(
                     applicationMode = mapsUiState.applicationMode,
-                    busStopOrigin = mapsUiState.busStopOriginName,
-                    busStopDestination = mapsUiState.busStopDestinationName,
+                    originName = mapsUiState.busStopOriginName,
+                    destinationName = mapsUiState.busStopDestinationName,
                     duration = duration,
                     distance = distance,
                     onExitWaiting = mapsActions::onStopWaiting,
@@ -189,10 +209,7 @@ fun MapsScreen(
                 onMapLoaded = { isMapLoaded = true },
                 onAnimateToMyLocationClick = mapsActions::onAnimateToUserLocation,
                 onStartTrackingClick = {
-                    if (
-                        mapsUiState.geofenceTransition == GeofenceTransition.ENTER ||
-                        mapsUiState.geofenceTransition == GeofenceTransition.DWELL
-                    ) {
+                    if (mapsUiState.geofenceTransition == GeofenceTransition.ENTER) {
                         isBusStopListVisible = true
                     } else {
                         "Fitur hanya bisa digunakan ketika berada di area halte"
@@ -241,4 +258,5 @@ interface MapsActions {
     fun onStartWaiting(destinationName: String, destinationLocation: LatLng)
     fun onStopWaiting()
     fun onStartDriving()
+    fun onResumeAction(isGranted: Boolean, isMapLoaded: Boolean)
 }

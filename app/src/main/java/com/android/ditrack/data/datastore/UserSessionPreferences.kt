@@ -24,7 +24,6 @@ class UserSessionPreferences(private val context: Context) {
         when (preferences[GEOFENCE_TRANSITION_KEY]) {
             GeofenceTransition.ENTER.name -> GeofenceTransition.ENTER
             GeofenceTransition.EXIT.name -> GeofenceTransition.EXIT
-            GeofenceTransition.DWELL.name -> GeofenceTransition.DWELL
             else -> GeofenceTransition.DEFAULT
         }
     }
@@ -85,7 +84,7 @@ class UserSessionPreferences(private val context: Context) {
 }
 
 enum class GeofenceTransition {
-    DEFAULT, ENTER, DWELL, EXIT
+    DEFAULT, ENTER, EXIT
 }
 
 enum class ApplicationMode {

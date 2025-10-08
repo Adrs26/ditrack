@@ -6,9 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
-import androidx.annotation.RequiresPermission
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.android.ditrack.R
@@ -35,7 +36,6 @@ class LocationTrackingService : Service(), KoinComponent {
 
     private val userSessionRepository by inject<UserSessionRepository>()
 
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onCreate() {
         super.onCreate()
         createTrackingNotificationChannel()
@@ -89,7 +89,7 @@ class LocationTrackingService : Service(), KoinComponent {
 
     private fun buildTrackingNotification(progress: Int, time: String): Notification {
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("500 m lagi menuju halte A")
+            .setContentTitle("500 m lagi menuju halte tujuan")
             .setContentText("Perkiraan sampai dalam 5 menit")
             .setSmallIcon(R.drawable.ic_directions_bus)
             .setOngoing(true)
@@ -97,8 +97,14 @@ class LocationTrackingService : Service(), KoinComponent {
             .build()
     }
 
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun updateNotification(progress: Int, time: String) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
         NotificationManagerCompat.from(this).notify(
             notificationId,
             buildTrackingNotification(progress, time)
