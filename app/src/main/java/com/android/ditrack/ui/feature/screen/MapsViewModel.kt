@@ -5,12 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.domain.repository.UserSessionRepository
+import com.android.ditrack.domain.usecase.GetBusStopsUseCase
 import com.android.ditrack.domain.usecase.GetRouteInfoUseCase
 import com.android.ditrack.domain.usecase.SetApplicationModeUseCase
 import com.android.ditrack.domain.usecase.SyncGeofenceUseCase
 import com.android.ditrack.ui.common.UiState
+import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.feature.utils.DataDummyProvider
 import com.android.ditrack.ui.feature.utils.MapsManager
+import com.android.ditrack.ui.feature.utils.distanceTo
 import com.android.ditrack.ui.feature.utils.onError
 import com.android.ditrack.ui.feature.utils.onSuccess
 import com.google.android.gms.maps.CameraUpdate
@@ -30,6 +33,7 @@ class MapsViewModel(
     private val userSessionRepository: UserSessionRepository,
     private val syncGeofenceUseCase: SyncGeofenceUseCase,
     private val setApplicationModeUseCase: SetApplicationModeUseCase,
+    private val getBusStopsUseCase: GetBusStopsUseCase,
     private val getRouteInfoUseCase: GetRouteInfoUseCase,
     private val mapsManager: MapsManager
 ) : ViewModel() {
@@ -46,7 +50,7 @@ class MapsViewModel(
                 userSessionRepository.getApplicationMode(),
                 userSessionRepository.getGeofenceTransition(),
                 userSessionRepository.getBusStopId(),
-                userSessionRepository.getBusStopLocation()
+                userSessionRepository.getBusStopLocation(),
             ) { mode, transition, id, location ->
                 listOf(mode, transition, id, location)
             }.collect { userSession ->
@@ -61,6 +65,12 @@ class MapsViewModel(
                         busStopOriginLocation = userSession[3] as LatLng
                     )
                 }
+            }
+        }
+
+        viewModelScope.launch {
+            _mapsUiState.update {
+                it.copy(busStops = getBusStopsUseCase())
             }
         }
     }
@@ -100,7 +110,12 @@ class MapsViewModel(
     fun stopWaitingMode() {
         viewModelScope.launch {
             setApplicationModeUseCase(ApplicationMode.DEFAULT)
-            _mapsUiState.update { it.copy(routeInfo = UiState.Empty) }
+            _mapsUiState.update {
+                it.copy(
+                    routeInfo = UiState.Empty,
+                    busStops = getBusStopsUseCase()
+                )
+            }
             animateToUserLocation()
         }
     }
@@ -140,7 +155,16 @@ class MapsViewModel(
                         duration = data.duration,
                         distance = data.distance
                     )
-                    _mapsUiState.update { it.copy(routeInfo = UiState.Success(routeInfoState)) }
+                    _mapsUiState.update {
+                        it.copy(
+                            routeInfo = UiState.Success(routeInfoState),
+                            busStops = getBusStopsUseCase { location ->
+                                val origin = _mapsUiState.value.busStopOriginLocation
+                                val destination = _mapsUiState.value.busStopDestinationLocation
+                                (location.distanceTo(origin) < 1.0) || (location.distanceTo(destination) < 1.0)
+                            }
+                        )
+                    }
                 }
                 .onError { error ->
                     _mapsUiState.update { it.copy(routeInfo = UiState.Error(error)) }
@@ -152,6 +176,7 @@ class MapsViewModel(
 data class MapsUiState(
     val applicationMode: ApplicationMode = ApplicationMode.DEFAULT,
     val geofenceTransition: GeofenceTransition = GeofenceTransition.DEFAULT,
+    val busStops: List<BusStopDummy> = emptyList(),
     val busStopOriginName: String = "",
     val busStopOriginLocation: LatLng = LatLng(0.0, 0.0),
     val busStopDestinationName: String = "",

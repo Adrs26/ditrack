@@ -1,13 +1,13 @@
 package com.android.ditrack.domain.usecase
 
 import com.android.ditrack.domain.model.RouteInfo
-import com.android.ditrack.domain.repository.MainRepository
+import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.ui.feature.utils.NetworkErrorType
 import com.android.ditrack.ui.feature.utils.Result
 import com.google.android.gms.maps.model.LatLng
 
 class GetRouteInfoUseCase(
-    private val mainRepository: MainRepository
+    private val mapsRepository: MapsRepository
 ) {
     suspend operator fun invoke(
         destination: LatLng,
@@ -17,7 +17,7 @@ class GetRouteInfoUseCase(
         val originStr = "${origin.latitude},${origin.longitude}"
         val destinationStr = "${destination.latitude},${destination.longitude}"
 
-        val routeInfo = mainRepository.getRouteDirections(
+        val routeInfo = mapsRepository.getRouteDirections(
             origin = originStr,
             destination = destinationStr,
             apiKey = apiKey

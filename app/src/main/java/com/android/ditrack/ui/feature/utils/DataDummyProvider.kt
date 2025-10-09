@@ -59,6 +59,11 @@ object DataDummyProvider {
                 id = 11,
                 name = "Halte Tes",
                 latLng = LatLng(-7.057581, 110.440196)
+            ),
+            BusStopDummy(
+                id = 12,
+                name = "Halte Tes 2",
+                latLng = LatLng(-7.0679967, 110.4492906)
             )
         )
     }

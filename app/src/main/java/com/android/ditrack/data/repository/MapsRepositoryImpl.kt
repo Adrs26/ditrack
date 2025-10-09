@@ -3,7 +3,9 @@ package com.android.ditrack.data.repository
 import android.util.Log
 import com.android.ditrack.data.model.DirectionsResponse
 import com.android.ditrack.domain.model.RouteInfo
-import com.android.ditrack.domain.repository.MainRepository
+import com.android.ditrack.domain.repository.MapsRepository
+import com.android.ditrack.ui.feature.utils.BusStopDummy
+import com.android.ditrack.ui.feature.utils.DataDummyProvider
 import com.android.ditrack.ui.feature.utils.MapsManager
 import com.android.ditrack.ui.feature.utils.NetworkErrorType
 import com.android.ditrack.ui.feature.utils.Result
@@ -14,10 +16,10 @@ import io.ktor.client.request.get
 import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.serialization.SerializationException
 
-class MainRepositoryImpl(
+class MapsRepositoryImpl(
     private val client: HttpClient,
     private val mapsManager: MapsManager
-) : MainRepository {
+) : MapsRepository {
 
     override suspend fun getRouteDirections(
         origin: String,
@@ -60,6 +62,10 @@ class MainRepositoryImpl(
                 else -> Result.Error(NetworkErrorType.UNKNOWN)
             }
         }
+    }
+
+    override fun getAllBusStops(): List<BusStopDummy> {
+        return DataDummyProvider.getBusStops()
     }
 
     private fun DirectionsResponse.toDomain(): RouteInfo? {

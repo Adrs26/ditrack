@@ -200,7 +200,7 @@ fun MapsScreen(
         ) {
             MapsContent(
                 context = context,
-                busStops = DataDummyProvider.getBusStops(),
+                busStops = mapsUiState.busStops,
                 cameraPositionState = cameraPositionState,
                 isLocationPermissionGranted = locationPermissionState.status.isGranted,
                 isMapLoaded = isMapLoaded,
