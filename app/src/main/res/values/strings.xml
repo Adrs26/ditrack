@@ -10,4 +10,7 @@
     <string name="serialization_error">Serialization error</string>
     <string name="no_route_found">No route found</string>
     <string name="unknown_error">Unknown error</string>
+    <string name="finish_trip">Selesaikan perjalanan</string>
+    <string name="enter_driving_mode">Masuk ke mode naik bus</string>
+    <string name="exit_waiting_mode">Keluar dari mode menunggu bus</string>
 </resources>

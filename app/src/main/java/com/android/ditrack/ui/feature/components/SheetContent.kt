@@ -16,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.android.ditrack.R
 import com.android.ditrack.data.datastore.ApplicationMode
 
 @Composable
@@ -28,6 +30,8 @@ fun SheetContent(
     distance: String,
     onStartDriving: () -> Unit,
     onExitWaiting: () -> Unit,
+    onChangeDestination: () -> Unit,
+    onFinishTrip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -58,35 +62,50 @@ fun SheetContent(
                 .padding(vertical = 24.dp, horizontal = 8.dp)
         ) {
             SheetRouteInformationContent(
+                applicationMode = applicationMode,
                 originName = originName,
                 destinationName = destinationName,
                 distance = distance,
+                onChangeDestination = onChangeDestination,
                 modifier = Modifier.padding(bottom = 48.dp)
             )
-            OutlinedButton(
-                onClick = onExitWaiting,
-                modifier = Modifier.fillMaxWidth(),
-                border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outline)
-            ) {
-                Text(
-                    text = "Keluar dari mode menunggu bus",
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.primary
+            if (applicationMode == ApplicationMode.WAITING) {
+                OutlinedButton(
+                    onClick = onExitWaiting,
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outline)
+                ) {
+                    Text(
+                        text = stringResource(R.string.exit_waiting_mode),
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     )
-                )
-            }
-            Button(
-                onClick = onStartDriving,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-            ) {
-                Text(
-                    text = "Masuk ke mode naik bus",
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                }
+                Button(
+                    onClick = onStartDriving,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.enter_driving_mode),
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            } else {
+                Button(
+                    onClick = onFinishTrip,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = stringResource(R.string.finish_trip),
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
     }

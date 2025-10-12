@@ -201,4 +201,25 @@ class MapsManager(
         Location.distanceBetween(userLat, userLng, busStopLat, busStopLng, results)
         return results[0]
     }
+
+    fun findNearestPointIndex(current: LatLng, points: List<LatLng>): Int {
+        var nearestIndex = 0
+        var minDistance = Float.MAX_VALUE
+
+        for (i in points.indices) {
+            val tempLoc = Location("").apply {
+                latitude = points[i].latitude
+                longitude = points[i].longitude
+            }
+            val dist = tempLoc.distanceTo(Location("").apply {
+                latitude = current.latitude
+                longitude = current.longitude
+            })
+            if (dist < minDistance) {
+                minDistance = dist
+                nearestIndex = i
+            }
+        }
+        return nearestIndex
+    }
 }

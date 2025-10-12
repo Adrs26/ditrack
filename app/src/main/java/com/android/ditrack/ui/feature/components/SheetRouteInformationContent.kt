@@ -3,6 +3,7 @@ package com.android.ditrack.ui.feature.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,14 +23,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.ditrack.data.datastore.ApplicationMode
 
 @Composable
 fun SheetRouteInformationContent(
+    applicationMode: ApplicationMode,
     originName: String,
     destinationName: String,
     distance: String,
+    onChangeDestination: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val destinationModifier = if (applicationMode == ApplicationMode.WAITING) {
+        Modifier
+            .clickable { onChangeDestination() }
+            .fillMaxWidth()
+    } else {
+        Modifier.fillMaxWidth()
+    }
+
     Column(
         modifier = modifier
     ) {
@@ -89,7 +101,7 @@ fun SheetRouteInformationContent(
             }
         }
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = destinationModifier,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -113,10 +125,12 @@ fun SheetRouteInformationContent(
                     .weight(1f),
                 style = MaterialTheme.typography.bodyMedium
             )
-            Icon(
-                imageVector = Icons.AutoMirrored.Default.KeyboardArrowRight,
-                contentDescription = null,
-            )
+            if (applicationMode == ApplicationMode.WAITING) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Default.KeyboardArrowRight,
+                    contentDescription = null,
+                )
+            }
         }
     }
 }

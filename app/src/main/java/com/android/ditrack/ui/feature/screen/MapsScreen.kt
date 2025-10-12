@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +36,7 @@ import com.android.ditrack.R
 import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.ui.common.UiState
+import com.android.ditrack.ui.feature.components.BusStopInformationDialog
 import com.android.ditrack.ui.feature.components.BusStopListContent
 import com.android.ditrack.ui.feature.components.ConfirmationDialog
 import com.android.ditrack.ui.feature.components.LoadingDialog
@@ -52,12 +54,12 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MapsScreen(
-    cameraUpdateEvent: SharedFlow<CameraUpdate>,
+    cameraUpdateEvent: Flow<CameraUpdate>,
     mapsUiState: MapsUiState,
     mapsActions: MapsActions,
 ) {
@@ -68,7 +70,10 @@ fun MapsScreen(
     }
 
     var isMapLoaded by remember { mutableStateOf(false) }
-    var isConfirmationDialogVisible by remember { mutableStateOf(false) }
+    var isBusStopInformationDialogVisible by remember { mutableStateOf(false) }
+    var isBusArriveToOriginConfirmationDialogVisible by remember { mutableStateOf(false) }
+    var isBusArriveToDestinationConfirmationDialogVisible by remember { mutableStateOf(false) }
+    var isBusStopNearbyConfirmationDialogVisible by remember { mutableStateOf(false) }
     var isLoadingDialogVisible by remember { mutableStateOf(false) }
     var isSheetVisible by remember { mutableStateOf(false) }
     var isBusStopListVisible by remember { mutableStateOf(false) }
@@ -144,7 +149,7 @@ fun MapsScreen(
             mapsUiState.applicationMode == ApplicationMode.DEFAULT
         ) {
             delay(5000)
-            isConfirmationDialogVisible = true
+            isBusStopNearbyConfirmationDialogVisible = true
         }
     }
 
@@ -182,8 +187,10 @@ fun MapsScreen(
                     destinationName = mapsUiState.busStopDestinationName,
                     duration = duration,
                     distance = distance,
+                    onStartDriving = { isBusArriveToOriginConfirmationDialogVisible = true},
                     onExitWaiting = mapsActions::onStopWaiting,
-                    onStartDriving = mapsActions::onStartDriving,
+                    onChangeDestination = { isBusStopListVisible = true },
+                    onFinishTrip = { isBusArriveToDestinationConfirmationDialogVisible = true },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             },
@@ -207,6 +214,7 @@ fun MapsScreen(
                 isSheetVisible = isSheetVisible,
                 polyLinePoints = polyLinePoints,
                 onMapLoaded = { isMapLoaded = true },
+                onBusStopMarkerClick = { isBusStopInformationDialogVisible = true },
                 onAnimateToMyLocationClick = mapsActions::onAnimateToUserLocation,
                 onStartTrackingClick = {
                     if (mapsUiState.geofenceTransition == GeofenceTransition.ENTER) {
@@ -217,30 +225,65 @@ fun MapsScreen(
                     }
                 }
             )
-            AnimatedVisibility(
-                visible = isBusStopListVisible,
-                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                BusStopListContent(
-                    busStops = DataDummyProvider.getBusStops(),
-                    onNavigateBack = { isBusStopListVisible = false },
-                    onBusStopSelect = mapsActions::onStartWaiting
-                )
-            }
         }
     }
 
-    if (isMapLoaded && isConfirmationDialogVisible) {
+    AnimatedVisibility(
+        visible = isBusStopListVisible,
+        enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+        exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        BusStopListContent(
+            busStops = DataDummyProvider.getBusStops(),
+            onNavigateBack = { isBusStopListVisible = false },
+            onBusStopSelect = mapsActions::onStartWaiting
+        )
+    }
+
+    if (isBusStopInformationDialogVisible) {
+        BusStopInformationDialog(
+            onDismissRequest = { isBusStopInformationDialogVisible = false }
+        )
+    }
+
+    if (isMapLoaded && isBusStopNearbyConfirmationDialogVisible) {
         ConfirmationDialog(
             icon = Icons.Default.Store,
             title = "Halte terdeteksi",
             description = "Posisi kamu berada di area ${mapsUiState.busStopOriginName}. Ingin menunggu di halte ini?",
-            onDismissRequest = { isConfirmationDialogVisible = false },
+            onDismissRequest = { isBusStopNearbyConfirmationDialogVisible = false },
             onConfirmRequest = {
-                isConfirmationDialogVisible = false
+                isBusStopNearbyConfirmationDialogVisible = false
                 isBusStopListVisible = true
+            }
+        )
+    }
+
+    if (isBusArriveToOriginConfirmationDialogVisible) {
+        ConfirmationDialog(
+            icon = Icons.Default.DirectionsBus,
+            title = "Bus telah sampai",
+            description = "Bus kamu telah sampai di ${mapsUiState.busStopOriginName}. Ingin beralih ke mode naik bus?",
+            onDismissRequest = { isBusArriveToOriginConfirmationDialogVisible = false },
+            onConfirmRequest = {
+                mapsActions.onStartDriving()
+                isBusArriveToOriginConfirmationDialogVisible = false
+                isBusStopListVisible = false
+            }
+        )
+    }
+
+    if (isBusArriveToDestinationConfirmationDialogVisible) {
+        ConfirmationDialog(
+            icon = Icons.Default.DirectionsBus,
+            title = "Bus telah sampai",
+            description = "Bus kamu telah sampai di ${mapsUiState.busStopOriginName}. Ingin menyelesaikan perjalanan?",
+            onDismissRequest = { isBusArriveToDestinationConfirmationDialogVisible = false },
+            onConfirmRequest = {
+                mapsActions.onStopWaiting()
+                isBusArriveToDestinationConfirmationDialogVisible = false
+                isBusStopListVisible = false
             }
         )
     }

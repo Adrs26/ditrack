@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun SheetBusInformationContent(
@@ -21,28 +22,28 @@ fun SheetBusInformationContent(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1.2f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Kode bus",
+                text = "Plat nomor",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
-                text = "B011",
+                text = "H1700AER",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp)
             )
         }
         Column(
-            modifier = Modifier.weight(2f),
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Penumpang saat ini",
+                text = "Kursi terisi",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodySmall
@@ -51,11 +52,11 @@ fun SheetBusInformationContent(
                 text = "23",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp)
             )
         }
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1.2f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
@@ -68,7 +69,7 @@ fun SheetBusInformationContent(
                 text = "2",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp)
             )
         }
     }

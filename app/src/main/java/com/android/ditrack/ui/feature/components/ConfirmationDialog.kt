@@ -86,7 +86,9 @@ fun ConfirmationDialog(
                     ) {
                         Text(
                             text = "Tidak",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                     Button(
