@@ -40,6 +40,7 @@ fun MapsContent(
     polyLinePoints: List<LatLng>,
     onMapLoaded: () -> Unit,
     onBusStopMarkerClick: () -> Unit,
+    onBusMarkerClick: () -> Unit,
     onAnimateToMyLocationClick: () -> Unit,
     onStartTrackingClick: () -> Unit
 ) {
@@ -75,7 +76,7 @@ fun MapsContent(
                 state = rememberUpdatedMarkerState(LatLng(-7.0550504, 110.4428640)),
                 icon = MarkerUtil.createBusMarker(context, R.drawable.ic_directions_bus),
                 onClick = {
-                    // Action when marker is clicked
+                    onBusMarkerClick()
                     true
                 }
             )

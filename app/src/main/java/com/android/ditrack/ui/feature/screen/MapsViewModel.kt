@@ -105,7 +105,7 @@ class MapsViewModel(
 
         viewModelScope.launch {
             getRouteInfo(busStopOriginLocation, apiKey)
-            delay(1000)
+            delay(500)
             if (_mapsUiState.value.routeInfo is UiState.Success) {
                 setApplicationModeUseCase(ApplicationMode.WAITING)
                 animateToUserLocation()
@@ -129,7 +129,7 @@ class MapsViewModel(
     fun startDrivingMode(apiKey: String) {
         viewModelScope.launch {
             getRouteInfo(busStopDestinationLocation, apiKey)
-            delay(1000)
+            delay(500)
             if (_mapsUiState.value.routeInfo is UiState.Success) {
                 setApplicationModeUseCase(ApplicationMode.DRIVING)
                 animateToUserLocation()

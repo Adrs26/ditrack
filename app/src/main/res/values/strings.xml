@@ -13,4 +13,10 @@
     <string name="finish_trip">Selesaikan perjalanan</string>
     <string name="enter_driving_mode">Masuk ke mode naik bus</string>
     <string name="exit_waiting_mode">Keluar dari mode menunggu bus</string>
+    <string name="bus_has_arrived">Bus telah sampai</string>
+    <string name="enter_driving_mode_confirmation">Bus kamu telah sampai di %1$s. Ingin beralih ke mode naik bus?</string>
+    <string name="finish_trip_confirmation">Bus kamu telah sampai di %1$s. Ingin menyelesaikan perjalanan?</string>
+    <string name="bus_stop_detected">Halte terdeteksi</string>
+    <string name="enter_waiting_mode_confirmation">Posisi kamu berada di area %1$s. Ingin menunggu di halte ini?</string>
+    <string name="feature_only_available_at_the_bus_stop_area">Fitur hanya bisa digunakan ketika berada di area halte</string>
 </resources>

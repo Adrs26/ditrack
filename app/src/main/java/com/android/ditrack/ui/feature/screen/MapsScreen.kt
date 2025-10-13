@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -36,6 +37,7 @@ import com.android.ditrack.R
 import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.ui.common.UiState
+import com.android.ditrack.ui.feature.components.BusInformationDialog
 import com.android.ditrack.ui.feature.components.BusStopInformationDialog
 import com.android.ditrack.ui.feature.components.BusStopListContent
 import com.android.ditrack.ui.feature.components.ConfirmationDialog
@@ -70,13 +72,9 @@ fun MapsScreen(
     }
 
     var isMapLoaded by remember { mutableStateOf(false) }
-    var isBusStopInformationDialogVisible by remember { mutableStateOf(false) }
-    var isBusArriveToOriginConfirmationDialogVisible by remember { mutableStateOf(false) }
-    var isBusArriveToDestinationConfirmationDialogVisible by remember { mutableStateOf(false) }
-    var isBusStopNearbyConfirmationDialogVisible by remember { mutableStateOf(false) }
-    var isLoadingDialogVisible by remember { mutableStateOf(false) }
     var isSheetVisible by remember { mutableStateOf(false) }
     var isBusStopListVisible by remember { mutableStateOf(false) }
+    var dialogState by remember { mutableStateOf<DialogState>(DialogState.None) }
 
     val polyLinePoints = remember(mapsUiState.routeInfo) {
         when (mapsUiState.routeInfo) {
@@ -114,21 +112,6 @@ fun MapsScreen(
         }
     )
 
-    when (mapsUiState.routeInfo) {
-        is UiState.Loading -> {
-            isLoadingDialogVisible = true
-            isSheetVisible = false
-        }
-        is UiState.Success -> {
-            isLoadingDialogVisible = false
-            isSheetVisible = true
-        }
-        else -> {
-            isLoadingDialogVisible = false
-            isSheetVisible = false
-        }
-    }
-
     LaunchedEffect(Unit) {
         cameraUpdateEvent.collect { cameraUpdate ->
             cameraPositionState.animate(update = cameraUpdate, durationMs = 1000)
@@ -149,7 +132,7 @@ fun MapsScreen(
             mapsUiState.applicationMode == ApplicationMode.DEFAULT
         ) {
             delay(5000)
-            isBusStopNearbyConfirmationDialogVisible = true
+            dialogState = DialogState.BusStopNearbyConfirmation
         }
     }
 
@@ -161,7 +144,19 @@ fun MapsScreen(
 
     LaunchedEffect(mapsUiState.routeInfo) {
         if (mapsUiState.routeInfo is UiState.Error) {
-            mapsUiState.routeInfo.error.toMessageError().asString(context).showMessageWithToast(context)
+            mapsUiState.routeInfo.error.toMessageError().asString(context)
+                .showMessageWithToast(context)
+        }
+
+        isSheetVisible = when (mapsUiState.routeInfo) {
+            is UiState.Success -> true
+            else -> false
+        }
+
+        dialogState = if (mapsUiState.routeInfo is UiState.Loading) {
+            DialogState.Loading
+        } else {
+            DialogState.None
         }
     }
 
@@ -187,10 +182,10 @@ fun MapsScreen(
                     destinationName = mapsUiState.busStopDestinationName,
                     duration = duration,
                     distance = distance,
-                    onStartDriving = { isBusArriveToOriginConfirmationDialogVisible = true},
+                    onStartDriving = { dialogState = DialogState.BusArriveToOriginConfirmation },
                     onExitWaiting = mapsActions::onStopWaiting,
                     onChangeDestination = { isBusStopListVisible = true },
-                    onFinishTrip = { isBusArriveToDestinationConfirmationDialogVisible = true },
+                    onFinishTrip = { dialogState = DialogState.BusArriveToDestinationConfirmation },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             },
@@ -214,13 +209,14 @@ fun MapsScreen(
                 isSheetVisible = isSheetVisible,
                 polyLinePoints = polyLinePoints,
                 onMapLoaded = { isMapLoaded = true },
-                onBusStopMarkerClick = { isBusStopInformationDialogVisible = true },
+                onBusStopMarkerClick = { dialogState = DialogState.BusStopInformation },
+                onBusMarkerClick = { dialogState = DialogState.BusInformation },
                 onAnimateToMyLocationClick = mapsActions::onAnimateToUserLocation,
                 onStartTrackingClick = {
                     if (mapsUiState.geofenceTransition == GeofenceTransition.ENTER) {
                         isBusStopListVisible = true
                     } else {
-                        "Fitur hanya bisa digunakan ketika berada di area halte"
+                        context.getString(R.string.feature_only_available_at_the_bus_stop_area)
                             .showMessageWithToast(context)
                     }
                 }
@@ -241,54 +237,71 @@ fun MapsScreen(
         )
     }
 
-    if (isBusStopInformationDialogVisible) {
-        BusStopInformationDialog(
-            onDismissRequest = { isBusStopInformationDialogVisible = false }
-        )
-    }
-
-    if (isMapLoaded && isBusStopNearbyConfirmationDialogVisible) {
-        ConfirmationDialog(
-            icon = Icons.Default.Store,
-            title = "Halte terdeteksi",
-            description = "Posisi kamu berada di area ${mapsUiState.busStopOriginName}. Ingin menunggu di halte ini?",
-            onDismissRequest = { isBusStopNearbyConfirmationDialogVisible = false },
-            onConfirmRequest = {
-                isBusStopNearbyConfirmationDialogVisible = false
-                isBusStopListVisible = true
+    when (dialogState) {
+        DialogState.None -> {}
+        DialogState.Loading -> {
+            LoadingDialog()
+        }
+        DialogState.BusInformation -> {
+            BusInformationDialog(
+                onDismissRequest = { dialogState = DialogState.None }
+            )
+        }
+        DialogState.BusStopInformation -> {
+            BusStopInformationDialog(
+                onDismissRequest = { dialogState = DialogState.None }
+            )
+        }
+        DialogState.BusArriveToOriginConfirmation -> {
+            ConfirmationDialog(
+                icon = Icons.Default.DirectionsBus,
+                title = stringResource(R.string.bus_has_arrived),
+                description = stringResource(
+                    R.string.enter_driving_mode_confirmation,
+                    mapsUiState.busStopOriginName
+                ),
+                onDismissRequest = { dialogState = DialogState.None },
+                onConfirmRequest = {
+                    mapsActions.onStartDriving()
+                    dialogState = DialogState.None
+                    isBusStopListVisible = false
+                }
+            )
+        }
+        DialogState.BusArriveToDestinationConfirmation -> {
+            ConfirmationDialog(
+                icon = Icons.Default.DirectionsBus,
+                title = stringResource(R.string.bus_has_arrived),
+                description = stringResource(
+                    R.string.finish_trip_confirmation,
+                    mapsUiState.busStopDestinationName
+                ),
+                onDismissRequest = { dialogState = DialogState.None },
+                onConfirmRequest = {
+                    mapsActions.onStopWaiting()
+                    dialogState = DialogState.None
+                    isBusStopListVisible = false
+                }
+            )
+        }
+        DialogState.BusStopNearbyConfirmation -> {
+            if (isMapLoaded) {
+                ConfirmationDialog(
+                    icon = Icons.Default.Store,
+                    title = stringResource(R.string.bus_stop_detected),
+                    description = stringResource(
+                        R.string.enter_waiting_mode_confirmation,
+                        mapsUiState.busStopOriginName
+                    ),
+                    onDismissRequest = { dialogState = DialogState.None },
+                    onConfirmRequest = {
+                        dialogState = DialogState.None
+                        isBusStopListVisible = true
+                    }
+                )
             }
-        )
+        }
     }
-
-    if (isBusArriveToOriginConfirmationDialogVisible) {
-        ConfirmationDialog(
-            icon = Icons.Default.DirectionsBus,
-            title = "Bus telah sampai",
-            description = "Bus kamu telah sampai di ${mapsUiState.busStopOriginName}. Ingin beralih ke mode naik bus?",
-            onDismissRequest = { isBusArriveToOriginConfirmationDialogVisible = false },
-            onConfirmRequest = {
-                mapsActions.onStartDriving()
-                isBusArriveToOriginConfirmationDialogVisible = false
-                isBusStopListVisible = false
-            }
-        )
-    }
-
-    if (isBusArriveToDestinationConfirmationDialogVisible) {
-        ConfirmationDialog(
-            icon = Icons.Default.DirectionsBus,
-            title = "Bus telah sampai",
-            description = "Bus kamu telah sampai di ${mapsUiState.busStopOriginName}. Ingin menyelesaikan perjalanan?",
-            onDismissRequest = { isBusArriveToDestinationConfirmationDialogVisible = false },
-            onConfirmRequest = {
-                mapsActions.onStopWaiting()
-                isBusArriveToDestinationConfirmationDialogVisible = false
-                isBusStopListVisible = false
-            }
-        )
-    }
-
-    if (isLoadingDialogVisible) { LoadingDialog() }
 
     BackHandler(isBusStopListVisible) {
         isBusStopListVisible = false
@@ -302,4 +315,14 @@ interface MapsActions {
     fun onStopWaiting()
     fun onStartDriving()
     fun onResumeAction(isGranted: Boolean, isMapLoaded: Boolean)
+}
+
+sealed class DialogState {
+    object None : DialogState()
+    object Loading : DialogState()
+    object BusInformation : DialogState()
+    object BusStopInformation : DialogState()
+    object BusArriveToOriginConfirmation : DialogState()
+    object BusArriveToDestinationConfirmation : DialogState()
+    object BusStopNearbyConfirmation : DialogState()
 }
