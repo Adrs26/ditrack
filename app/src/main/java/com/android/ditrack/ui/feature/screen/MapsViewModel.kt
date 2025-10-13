@@ -1,5 +1,6 @@
 package com.android.ditrack.ui.feature.screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.ditrack.data.datastore.ApplicationMode
@@ -7,7 +8,6 @@ import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.domain.repository.UserSessionRepository
 import com.android.ditrack.domain.usecase.GetBusStopsUseCase
 import com.android.ditrack.domain.usecase.GetRouteInfoUseCase
-import com.android.ditrack.domain.usecase.SetApplicationModeUseCase
 import com.android.ditrack.domain.usecase.SyncGeofenceUseCase
 import com.android.ditrack.ui.common.UiState
 import com.android.ditrack.ui.feature.utils.BusStopDummy
@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
 class MapsViewModel(
     private val userSessionRepository: UserSessionRepository,
     private val syncGeofenceUseCase: SyncGeofenceUseCase,
-    private val setApplicationModeUseCase: SetApplicationModeUseCase,
     private val getBusStopsUseCase: GetBusStopsUseCase,
     private val getRouteInfoUseCase: GetRouteInfoUseCase,
     private val mapsManager: MapsManager
@@ -49,19 +48,17 @@ class MapsViewModel(
     init {
         viewModelScope.launch {
             combine(
-                userSessionRepository.getApplicationMode(),
                 userSessionRepository.getGeofenceTransition(),
-                userSessionRepository.getBusStopId(),
-            ) { mode, transition, id ->
-                listOf(mode, transition, id)
+                userSessionRepository.getBusStopId()
+            ) { transition, id ->
+                listOf(transition, id)
             }.collect { userSession ->
                 val busStopOriginName = DataDummyProvider.getBusStops()
-                    .firstOrNull { it.id == (userSession[2] as Int) }?.name ?: ""
+                    .firstOrNull { it.id == (userSession[1] as Int) }?.name ?: ""
 
                 _mapsUiState.update {
                     it.copy(
-                        applicationMode = userSession[0] as ApplicationMode,
-                        geofenceTransition = userSession[1] as GeofenceTransition,
+                        geofenceTransition = userSession[0] as GeofenceTransition,
                         busStopOriginName = busStopOriginName,
                     )
                 }
@@ -83,8 +80,12 @@ class MapsViewModel(
 
     fun syncGeofence(isGranted: Boolean, isMapLoaded: Boolean) {
         if (isGranted && isMapLoaded) {
-            animateToUserLocation()
-            viewModelScope.launch { syncGeofenceUseCase() }
+            viewModelScope.launch {
+                syncGeofenceUseCase()
+                delay(500)
+                animateToUserLocation()
+                Log.d("MapsViewModel", "Geofence synced")
+            }
         }
     }
 
@@ -100,14 +101,19 @@ class MapsViewModel(
     }
 
     fun startWaitingMode(destinationName: String, destinationLocation: LatLng, apiKey: String) {
-        _mapsUiState.update { it.copy(busStopDestinationName = destinationName) }
+        _mapsUiState.update {
+            it.copy(
+                applicationMode = ApplicationMode.WAITING,
+                busStopDestinationName = destinationName
+            )
+        }
         busStopDestinationLocation = destinationLocation
 
         viewModelScope.launch {
             getRouteInfo(busStopOriginLocation, apiKey)
             delay(500)
             if (_mapsUiState.value.routeInfo is UiState.Success) {
-                setApplicationModeUseCase(ApplicationMode.WAITING)
+                mapsManager.startLocationTrackingService()
                 animateToUserLocation()
             }
         }
@@ -115,23 +121,28 @@ class MapsViewModel(
 
     fun stopWaitingMode() {
         viewModelScope.launch {
-            setApplicationModeUseCase(ApplicationMode.DEFAULT)
             _mapsUiState.update {
                 it.copy(
+                    applicationMode = ApplicationMode.DEFAULT,
                     routeInfo = UiState.Empty,
                     busStops = getBusStopsUseCase()
                 )
             }
+            mapsManager.stopLocationTrackingService()
             animateToUserLocation()
         }
     }
 
     fun startDrivingMode(apiKey: String) {
+        _mapsUiState.update { it.copy(applicationMode = ApplicationMode.DRIVING) }
+
         viewModelScope.launch {
             getRouteInfo(busStopDestinationLocation, apiKey)
             delay(500)
             if (_mapsUiState.value.routeInfo is UiState.Success) {
-                setApplicationModeUseCase(ApplicationMode.DRIVING)
+                mapsManager.stopLocationTrackingService()
+                delay(1000)
+                mapsManager.startLocationTrackingService()
                 animateToUserLocation()
             }
         }

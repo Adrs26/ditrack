@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    override fun onResumeAction(isGranted: Boolean, isMapLoaded: Boolean) {
+                    override fun onResume(isGranted: Boolean, isMapLoaded: Boolean) {
                         viewModel.syncGeofence(
                             isGranted = isGranted,
                             isMapLoaded = isMapLoaded
