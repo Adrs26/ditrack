@@ -1,6 +1,5 @@
 package com.android.ditrack.data.repository
 
-import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.data.datastore.UserSessionPreferences
 import com.android.ditrack.domain.repository.UserSessionRepository
@@ -13,10 +12,6 @@ class UserSessionRepositoryImpl(
 
     override fun getGeofenceTransition(): Flow<GeofenceTransition> {
         return userSessionPreferences.geofenceTransition
-    }
-
-    override fun getApplicationMode(): Flow<ApplicationMode> {
-        return userSessionPreferences.applicationMode
     }
 
     override fun getBusStopId(): Flow<Int> {
@@ -33,10 +28,6 @@ class UserSessionRepositoryImpl(
 
     override suspend fun setGeofenceTransition(transition: GeofenceTransition) {
         userSessionPreferences.setGeofenceTransition(transition)
-    }
-
-    override suspend fun setApplicationMode(mode: ApplicationMode) {
-        userSessionPreferences.setApplicationMode(mode)
     }
 
     override suspend fun setBusStopId(id: Int) {

@@ -11,13 +11,13 @@ espressoCore = "3.7.0"
 kotlinxSerializationJson = "1.9.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
-composeBom = "2025.09.01"
-mapsCompose = "6.12.0"
+composeBom = "2025.10.00"
+mapsCompose = "6.12.1"
 materialIconsExtendedAndroid = "1.7.8"
 navigationCompose = "2.9.5"
 playServicesLocation = "21.3.0"
 playServicesMaps = "19.2.0"
-ktor = "3.3.0"
+ktor = "3.3.1"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }

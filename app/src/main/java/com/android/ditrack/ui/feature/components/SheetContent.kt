@@ -19,7 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.android.ditrack.R
-import com.android.ditrack.data.datastore.ApplicationMode
+import com.android.ditrack.ui.feature.screen.ApplicationMode
 
 @Composable
 fun SheetContent(

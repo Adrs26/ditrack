@@ -18,10 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.android.ditrack.ui.theme.DitrackTheme
 
 @Composable
 fun BusInformationDialog(
@@ -129,13 +127,5 @@ fun BusInformationDialog(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BusInformationDialogPreview() {
-    DitrackTheme {
-        BusInformationDialog(onDismissRequest = {})
     }
 }

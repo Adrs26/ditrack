@@ -17,8 +17,6 @@ import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class MapsManager(
     private val context: Context,
@@ -98,7 +96,7 @@ class MapsManager(
         }
     }
 
-    fun decodePolyline(encoded: String): List<LatLng> {
+    fun decodePolyLine(encoded: String): List<LatLng> {
         val poly = ArrayList<LatLng>()
         var index = 0
         val len = encoded.length
@@ -143,26 +141,7 @@ class MapsManager(
         context.stopService(serviceIntent)
     }
 
-    suspend fun getCurrentGeofenceStatus(
-        busStops: List<BusStopDummy>
-    ): Pair<Boolean, BusStopDummy> = withContext(Dispatchers.IO) {
-        try {
-            val location = getLastKnownLocation() ?: return@withContext Pair(false, BusStopDummy())
-            val userLatLng = LatLng(location.latitude, location.longitude)
-
-            val inside = busStops.firstOrNull { isInsideGeofence(userLatLng, it) }
-
-            if (inside != null) {
-                Pair(true, inside)
-            } else {
-                Pair(false, BusStopDummy())
-            }
-        } catch (_: Exception) {
-            Pair(false, BusStopDummy())
-        }
-    }
-
-    private fun getLastKnownLocation(): Location? {
+    fun getLastKnownLocation(): Location? {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -178,20 +157,7 @@ class MapsManager(
         }
     }
 
-    private fun isInsideGeofence(
-        userLatLng: LatLng,
-        busStop: BusStopDummy
-    ): Boolean {
-        val distance = haversine(
-            userLatLng.latitude,
-            userLatLng.longitude,
-            busStop.latLng.latitude,
-            busStop.latLng.longitude
-        )
-        return distance <= 100f
-    }
-
-    private fun haversine(
+    fun calculateHaversine(
         userLat: Double,
         userLng: Double,
         busStopLat: Double,

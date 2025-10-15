@@ -13,8 +13,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.android.ditrack.R
-import com.android.ditrack.data.datastore.ApplicationMode
-import com.android.ditrack.domain.repository.UserSessionRepository
 import com.android.ditrack.ui.feature.utils.NotificationUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +23,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 class LocationTrackingService : Service(), KoinComponent {
 
@@ -33,8 +30,6 @@ class LocationTrackingService : Service(), KoinComponent {
     private val channelId = "tracking_channel"
     private val channelName = "Tracking Bus Channel"
     private val notificationId = 1
-
-    private val userSessionRepository by inject<UserSessionRepository>()
 
     override fun onCreate() {
         super.onCreate()
@@ -64,7 +59,6 @@ class LocationTrackingService : Service(), KoinComponent {
     override fun onBind(p0: Intent?): IBinder? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        serviceScope.launch { userSessionRepository.setApplicationMode(ApplicationMode.DEFAULT) }
         stopSelf()
         super.onTaskRemoved(rootIntent)
     }

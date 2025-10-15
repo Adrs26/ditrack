@@ -13,7 +13,6 @@ class UserSessionPreferences(private val context: Context) {
 
     companion object {
         private val GEOFENCE_TRANSITION_KEY = stringPreferencesKey("geofence_transition")
-        private val APPLICATION_MODE_KEY = stringPreferencesKey("application_mode")
         private val BUS_STOP_ID_KEY = intPreferencesKey("bus_stop_id")
         private val BUS_STOP_LATITUDE_KEY = doublePreferencesKey("bus_stop_latitude")
         private val BUS_STOP_LONGITUDE_KEY = doublePreferencesKey("bus_stop_longitude")
@@ -25,15 +24,6 @@ class UserSessionPreferences(private val context: Context) {
             GeofenceTransition.ENTER.name -> GeofenceTransition.ENTER
             GeofenceTransition.EXIT.name -> GeofenceTransition.EXIT
             else -> GeofenceTransition.DEFAULT
-        }
-    }
-
-    val applicationMode = context.dataStore.data.map { preferences ->
-        when (preferences[APPLICATION_MODE_KEY]) {
-            ApplicationMode.WAITING.name -> ApplicationMode.WAITING
-            ApplicationMode.DRIVING.name -> ApplicationMode.DRIVING
-            ApplicationMode.ARRIVED.name -> ApplicationMode.ARRIVED
-            else -> ApplicationMode.DEFAULT
         }
     }
 
@@ -54,12 +44,6 @@ class UserSessionPreferences(private val context: Context) {
     suspend fun setGeofenceTransition(transition: GeofenceTransition) {
         context.dataStore.edit { preferences ->
             preferences[GEOFENCE_TRANSITION_KEY] = transition.name
-        }
-    }
-
-    suspend fun setApplicationMode(mode: ApplicationMode) {
-        context.dataStore.edit { preferences ->
-            preferences[APPLICATION_MODE_KEY] = mode.name
         }
     }
 
@@ -85,8 +69,4 @@ class UserSessionPreferences(private val context: Context) {
 
 enum class GeofenceTransition {
     DEFAULT, ENTER, EXIT
-}
-
-enum class ApplicationMode {
-    DEFAULT, WAITING, DRIVING, ARRIVED
 }

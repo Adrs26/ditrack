@@ -3,7 +3,6 @@ package com.android.ditrack.ui.feature.screen
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.ditrack.data.datastore.ApplicationMode
 import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.domain.repository.UserSessionRepository
 import com.android.ditrack.domain.usecase.GetBusStopsUseCase
@@ -123,7 +122,7 @@ class MapsViewModel(
         viewModelScope.launch {
             _mapsUiState.update {
                 it.copy(
-                    applicationMode = ApplicationMode.DEFAULT,
+                    applicationMode = ApplicationMode.IDLING,
                     routeInfo = UiState.Empty,
                     busStops = getBusStopsUseCase()
                 )
@@ -180,13 +179,18 @@ class MapsViewModel(
 }
 
 data class MapsUiState(
-    val applicationMode: ApplicationMode = ApplicationMode.DEFAULT,
+    val applicationMode: ApplicationMode = ApplicationMode.IDLING,
     val geofenceTransition: GeofenceTransition = GeofenceTransition.DEFAULT,
     val busStops: List<BusStopDummy> = emptyList(),
     val busStopOriginName: String = "",
     val busStopDestinationName: String = "",
     val routeInfo: UiState<RouteInfoState> = UiState.Empty
 )
+
+enum class ApplicationMode {
+    IDLING, WAITING, DRIVING, ARRIVING
+}
+
 
 data class RouteInfoState(
     val polylinePoints: List<LatLng> = emptyList(),

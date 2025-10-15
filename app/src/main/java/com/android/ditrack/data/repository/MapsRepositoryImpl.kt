@@ -71,7 +71,7 @@ class MapsRepositoryImpl(
     private fun DirectionsResponse.toDomain(): RouteInfo? {
         val route = this.routes.firstOrNull() ?: return null
 
-        val points = mapsManager.decodePolyline(route.overviewPolyline.points)
+        val points = mapsManager.decodePolyLine(route.overviewPolyline.points)
         val duration = route.legs.firstOrNull()?.duration?.text ?: ""
         val distance = route.legs.firstOrNull()?.distance?.text ?: ""
 

@@ -35,14 +35,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.ditrack.data.datastore.ApplicationMode
+import com.android.ditrack.ui.feature.screen.ApplicationMode
 import com.android.ditrack.ui.theme.Blue800
 import com.android.ditrack.ui.theme.Charcoal
 
 @Composable
 fun SheetMainInformationContent(
-    duration: String,
     applicationMode: ApplicationMode,
+    duration: String,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -97,10 +97,10 @@ fun SheetMainInformationContent(
             )
             LinearProgress(
                 status = when (applicationMode) {
-                    ApplicationMode.DEFAULT -> 1
+                    ApplicationMode.IDLING -> 1
                     ApplicationMode.WAITING -> 1
                     ApplicationMode.DRIVING -> 3
-                    ApplicationMode.ARRIVED -> 2
+                    ApplicationMode.ARRIVING -> 2
                 },
                 modifier = Modifier.weight(1f)
             )
@@ -190,18 +190,18 @@ private fun changeIconColor(
     return when(icon) {
         Icons.Default.DirectionsBus -> {
             when(applicationMode) {
-                ApplicationMode.DEFAULT -> Charcoal
+                ApplicationMode.IDLING -> Charcoal
                 ApplicationMode.WAITING -> Charcoal
                 ApplicationMode.DRIVING -> Blue800
-                ApplicationMode.ARRIVED -> Blue800
+                ApplicationMode.ARRIVING -> Blue800
             }
         }
         Icons.Default.Store -> {
             when(applicationMode) {
-                ApplicationMode.DEFAULT -> Charcoal
+                ApplicationMode.IDLING -> Charcoal
                 ApplicationMode.WAITING -> Charcoal
                 ApplicationMode.DRIVING -> Charcoal
-                ApplicationMode.ARRIVED -> Blue800
+                ApplicationMode.ARRIVING -> Blue800
             }
         }
         else -> Blue800
