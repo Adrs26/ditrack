@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -19,7 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.android.ditrack.R
-import com.android.ditrack.ui.feature.screen.ApplicationMode
+import com.android.ditrack.domain.model.ApplicationMode
 
 @Composable
 fun SheetContent(
@@ -28,10 +27,8 @@ fun SheetContent(
     destinationName: String,
     duration: String,
     distance: String,
-    onStartDriving: () -> Unit,
     onExitWaiting: () -> Unit,
     onChangeDestination: () -> Unit,
-    onFinishTrip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -67,7 +64,7 @@ fun SheetContent(
                 destinationName = destinationName,
                 distance = distance,
                 onChangeDestination = onChangeDestination,
-                modifier = Modifier.padding(bottom = 48.dp)
+                modifier = Modifier.padding(bottom = 32.dp)
             )
             if (applicationMode == ApplicationMode.WAITING) {
                 OutlinedButton(
@@ -81,29 +78,6 @@ fun SheetContent(
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.primary
                         )
-                    )
-                }
-                Button(
-                    onClick = onStartDriving,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.enter_driving_mode),
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            } else {
-                Button(
-                    onClick = onFinishTrip,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(R.string.finish_trip),
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }

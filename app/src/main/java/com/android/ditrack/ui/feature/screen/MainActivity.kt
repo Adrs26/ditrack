@@ -51,12 +51,6 @@ class MainActivity : ComponentActivity() {
                         viewModel.stopWaitingMode()
                     }
 
-                    override fun onStartDriving() {
-                        viewModel.startDrivingMode(
-                            apiKey = getString(R.string.maps_api_key)
-                        )
-                    }
-
                     override fun onResume(isGranted: Boolean, isMapLoaded: Boolean) {
                         viewModel.syncGeofence(
                             isGranted = isGranted,

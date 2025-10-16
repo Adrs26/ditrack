@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.android.ditrack.R
 import com.android.ditrack.receiver.GeofenceBroadcastReceiver
 import com.android.ditrack.service.LocationTrackingService
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -95,6 +96,8 @@ class MapsManager(
             geofencingClient.removeGeofences(removeIds.map { it.toString() })
         }
     }
+
+    fun getMapsApiKey() = context.getString(R.string.maps_api_key)
 
     fun decodePolyLine(encoded: String): List<LatLng> {
         val poly = ArrayList<LatLng>()

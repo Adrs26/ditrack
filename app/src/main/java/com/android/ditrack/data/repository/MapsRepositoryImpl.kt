@@ -2,6 +2,7 @@ package com.android.ditrack.data.repository
 
 import android.util.Log
 import com.android.ditrack.data.model.DirectionsResponse
+import com.android.ditrack.domain.model.ApplicationMode
 import com.android.ditrack.domain.model.RouteInfo
 import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.ui.feature.utils.BusStopDummy
@@ -14,12 +15,35 @@ import io.ktor.client.call.body
 import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.request.get
 import io.ktor.util.network.UnresolvedAddressException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.SerializationException
 
 class MapsRepositoryImpl(
     private val client: HttpClient,
     private val mapsManager: MapsManager
 ) : MapsRepository {
+
+    private val _isServiceRunning = MutableStateFlow(false)
+    override val isServiceRunning = _isServiceRunning.asStateFlow()
+
+    private val _event = MutableStateFlow<ApplicationMode>(ApplicationMode.IDLING)
+    override val event = _event.asStateFlow()
+
+    private val _command = MutableStateFlow<ApplicationMode>(ApplicationMode.IDLING)
+    override val command = _command.asStateFlow()
+
+    override fun setServiceRunning(isServiceRunning: Boolean) {
+        _isServiceRunning.value = isServiceRunning
+    }
+
+    override suspend fun sendEventFromService(event: ApplicationMode) {
+        _event.value = event
+    }
+
+    override suspend fun sendCommandToService(command: ApplicationMode) {
+        _command.value = command
+    }
 
     override suspend fun getRouteDirections(
         origin: String,

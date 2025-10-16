@@ -9,48 +9,50 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.android.ditrack.R
+import com.android.ditrack.domain.model.ApplicationMode
+import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.ui.feature.utils.NotificationUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class LocationTrackingService : Service(), KoinComponent {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var currentJob: Job? = null
     private val channelId = "tracking_channel"
     private val channelName = "Tracking Bus Channel"
     private val notificationId = 1
 
+    private val mapsRepository by inject<MapsRepository>()
+
     override fun onCreate() {
         super.onCreate()
+        Log.d("LocationTrackingService", "Service new created")
         createTrackingNotificationChannel()
         startForeground(notificationId, buildTrackingNotification(0, "20.15"))
+        mapsRepository.setServiceRunning(true)
 
         serviceScope.launch {
-            var progress = 1
-            while (isActive) {
-                withContext(Dispatchers.Main) {
-                    updateNotification(progress, "20.15")
-                }
-                progress++
-                delay(1000)
-                if (progress > 10) {
-                    NotificationUtil.sendNotification(
-                        this@LocationTrackingService,
-                        "Perjalanan selesai",
-                        "Anda telah sampai halte tujuan"
-                    )
-                    break
+            mapsRepository.command.collect { command ->
+                currentJob?.cancel()
+                when (command) {
+                    ApplicationMode.IDLING, ApplicationMode.ARRIVING -> Unit
+                    ApplicationMode.WAITING, ApplicationMode.DRIVING  -> {
+                        currentJob = serviceScope.launch { startTrackingBus(command) }
+                    }
                 }
             }
         }
@@ -64,6 +66,7 @@ class LocationTrackingService : Service(), KoinComponent {
     }
 
     override fun onDestroy() {
+        currentJob?.cancel()
         serviceScope.cancel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -71,6 +74,7 @@ class LocationTrackingService : Service(), KoinComponent {
             @Suppress("DEPRECATION")
             stopForeground(true)
         }
+        mapsRepository.setServiceRunning(false)
         super.onDestroy()
     }
 
@@ -103,5 +107,40 @@ class LocationTrackingService : Service(), KoinComponent {
             notificationId,
             buildTrackingNotification(progress, time)
         )
+    }
+
+    private suspend fun startTrackingBus(command: ApplicationMode) {
+        var progress = 1
+        while (true) {
+            withContext(Dispatchers.Main) {
+                updateNotification(progress, "20.15")
+            }
+            progress++
+            delay(1000)
+            Log.d("LocationTrackingService", "startTrackingBus: $progress")
+            if (progress > 20) {
+                when (command) {
+                    ApplicationMode.IDLING, ApplicationMode.ARRIVING -> Unit
+                    ApplicationMode.WAITING -> {
+                        NotificationUtil.sendNotification(
+                            this@LocationTrackingService,
+                            "Bus telah tiba",
+                            "Anda akan otomatis beralih ke mode naik bus"
+                        )
+                        mapsRepository.sendEventFromService(ApplicationMode.DRIVING)
+                        break
+                    }
+                    ApplicationMode.DRIVING -> {
+                        NotificationUtil.sendNotification(
+                            this@LocationTrackingService,
+                            "Bus telah tiba",
+                            "Perjalanan akan otomatis diselesaikan"
+                        )
+                        mapsRepository.sendEventFromService(ApplicationMode.ARRIVING)
+                        break
+                    }
+                }
+            }
+        }
     }
 }

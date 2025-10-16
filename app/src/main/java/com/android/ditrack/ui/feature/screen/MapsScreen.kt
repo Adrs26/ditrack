@@ -31,6 +31,7 @@ import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.ui.feature.components.BusStopListContent
 import com.android.ditrack.ui.feature.components.DialogSection
 import com.android.ditrack.ui.feature.components.MapsContent
+import com.android.ditrack.ui.feature.components.MapsDialogState
 import com.android.ditrack.ui.feature.components.SheetContent
 import com.android.ditrack.ui.feature.components.SheetHandle
 import com.android.ditrack.ui.feature.handler.CollectMapsEvent
@@ -93,10 +94,8 @@ fun MapsScreen(
                     destinationName = mapsUiState.busStopDestinationName,
                     duration = routeInfoState.duration,
                     distance = routeInfoState.distance,
-                    onStartDriving = { dialogState = MapsDialogState.BusArriveToOriginConfirmation },
                     onExitWaiting = mapsActions::onStopWaiting,
                     onChangeDestination = { isBusStopListVisible = true },
-                    onFinishTrip = { dialogState = MapsDialogState.BusArriveToDestinationConfirmation },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             },
@@ -152,8 +151,6 @@ fun MapsScreen(
         dialogState = dialogState,
         mapsUiState = mapsUiState,
         isMapLoaded = isMapLoaded,
-        onStopWaiting = mapsActions::onStopWaiting,
-        onStartDriving = mapsActions::onStartDriving,
         onShowBusStopList = { isBusStopListVisible = it },
         onDismissRequest = { dialogState = MapsDialogState.None }
     )
@@ -180,16 +177,5 @@ interface MapsActions {
     fun onAnimateToUserLocation()
     fun onStartWaiting(destinationName: String, destinationLocation: LatLng)
     fun onStopWaiting()
-    fun onStartDriving()
     fun onResume(isGranted: Boolean, isMapLoaded: Boolean)
-}
-
-sealed class MapsDialogState {
-    object None : MapsDialogState()
-    object Loading : MapsDialogState()
-    object BusInformation : MapsDialogState()
-    object BusStopInformation : MapsDialogState()
-    object BusArriveToOriginConfirmation : MapsDialogState()
-    object BusArriveToDestinationConfirmation : MapsDialogState()
-    object BusStopNearbyConfirmation : MapsDialogState()
 }

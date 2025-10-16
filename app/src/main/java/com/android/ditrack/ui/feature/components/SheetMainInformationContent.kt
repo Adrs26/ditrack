@@ -35,7 +35,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.ditrack.ui.feature.screen.ApplicationMode
+import com.android.ditrack.domain.model.ApplicationMode
 import com.android.ditrack.ui.theme.Blue800
 import com.android.ditrack.ui.theme.Charcoal
 

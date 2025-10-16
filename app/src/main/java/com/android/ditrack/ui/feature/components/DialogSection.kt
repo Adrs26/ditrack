@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.Store
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.android.ditrack.R
-import com.android.ditrack.ui.feature.screen.MapsDialogState
 import com.android.ditrack.ui.feature.screen.MapsUiState
 
 @Composable
@@ -14,8 +13,6 @@ fun DialogSection(
     dialogState: MapsDialogState,
     mapsUiState: MapsUiState,
     isMapLoaded: Boolean,
-    onStopWaiting: () -> Unit,
-    onStartDriving: () -> Unit,
     onShowBusStopList: (Boolean) -> Unit,
     onDismissRequest: () -> Unit,
 ) {
@@ -34,34 +31,26 @@ fun DialogSection(
                 onDismissRequest = onDismissRequest
             )
         }
-        MapsDialogState.BusArriveToOriginConfirmation -> {
-            ConfirmationDialog(
+        MapsDialogState.BusArriveToOriginInformation -> {
+            InformationDialog(
                 icon = Icons.Default.DirectionsBus,
                 title = stringResource(R.string.bus_has_arrived),
                 description = stringResource(
                     R.string.enter_driving_mode_confirmation,
                     mapsUiState.busStopOriginName
                 ),
-                onDismissRequest = onDismissRequest,
-                onConfirmRequest = {
-                    onStartDriving()
-                    onDismissRequest()
-                }
+                onDismissRequest = onDismissRequest
             )
         }
-        MapsDialogState.BusArriveToDestinationConfirmation -> {
-            ConfirmationDialog(
+        MapsDialogState.BusArriveToDestinationInformation -> {
+            InformationDialog(
                 icon = Icons.Default.DirectionsBus,
                 title = stringResource(R.string.bus_has_arrived),
                 description = stringResource(
                     R.string.finish_trip_confirmation,
                     mapsUiState.busStopDestinationName
                 ),
-                onDismissRequest = onDismissRequest,
-                onConfirmRequest = {
-                    onStopWaiting()
-                    onDismissRequest()
-                }
+                onDismissRequest = onDismissRequest
             )
         }
         MapsDialogState.BusStopNearbyConfirmation -> {
@@ -82,4 +71,14 @@ fun DialogSection(
             }
         }
     }
+}
+
+sealed class MapsDialogState {
+    object None : MapsDialogState()
+    object Loading : MapsDialogState()
+    object BusInformation : MapsDialogState()
+    object BusStopInformation : MapsDialogState()
+    object BusArriveToOriginInformation : MapsDialogState()
+    object BusArriveToDestinationInformation : MapsDialogState()
+    object BusStopNearbyConfirmation : MapsDialogState()
 }

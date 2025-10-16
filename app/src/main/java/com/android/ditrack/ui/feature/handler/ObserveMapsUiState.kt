@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.android.ditrack.data.datastore.GeofenceTransition
+import com.android.ditrack.domain.model.ApplicationMode
 import com.android.ditrack.ui.common.UiState
-import com.android.ditrack.ui.feature.screen.ApplicationMode
-import com.android.ditrack.ui.feature.screen.MapsDialogState
+import com.android.ditrack.ui.feature.components.MapsDialogState
 import com.android.ditrack.ui.feature.screen.MapsUiState
 import com.android.ditrack.ui.feature.screen.RouteInfoState
 import com.android.ditrack.ui.feature.utils.toMessageError
@@ -45,12 +45,22 @@ fun ObserveMapsUiState(
                 onToggleSheet(false)
             }
             is UiState.Success -> {
-                onShowDialog(MapsDialogState.None)
+                when (mapsUiState.applicationMode) {
+                    ApplicationMode.DRIVING -> {
+                        onShowDialog(MapsDialogState.BusArriveToOriginInformation)
+                    }
+                    else -> onShowDialog(MapsDialogState.None)
+                }
                 onToggleSheet(true)
                 onGetRouteInfo(routeInfo.data)
             }
             else -> {
-                onShowDialog(MapsDialogState.None)
+                when (mapsUiState.applicationMode) {
+                    ApplicationMode.ARRIVING -> {
+                        onShowDialog(MapsDialogState.BusArriveToDestinationInformation)
+                    }
+                    else -> onShowDialog(MapsDialogState.None)
+                }
                 onToggleSheet(false)
                 onGetRouteInfo(RouteInfoState())
             }
