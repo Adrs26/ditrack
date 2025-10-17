@@ -5,9 +5,12 @@ import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
+
+val Context.dataStore by preferencesDataStore("ditrack_prefs")
 
 class UserSessionPreferences(private val context: Context) {
 

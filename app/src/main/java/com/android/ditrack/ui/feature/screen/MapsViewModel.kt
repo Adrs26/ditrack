@@ -7,14 +7,15 @@ import com.android.ditrack.domain.model.ApplicationMode
 import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.domain.repository.UserSessionRepository
 import com.android.ditrack.domain.usecase.GetBusStopsUseCase
-import com.android.ditrack.domain.usecase.GetRouteInfoUseCase
+import com.android.ditrack.domain.usecase.GetCurrentLocationUseCase
+import com.android.ditrack.domain.usecase.StartDrivingModeUseCase
+import com.android.ditrack.domain.usecase.StartWaitingModeUseCase
+import com.android.ditrack.domain.usecase.StopWaitingModeUseCase
 import com.android.ditrack.domain.usecase.SyncGeofenceUseCase
 import com.android.ditrack.ui.common.UiState
 import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.feature.utils.DataDummyProvider
-import com.android.ditrack.ui.feature.utils.MapsManager
 import com.android.ditrack.ui.feature.utils.NetworkErrorType
-import com.android.ditrack.ui.feature.utils.distanceTo
 import com.android.ditrack.ui.feature.utils.onError
 import com.android.ditrack.ui.feature.utils.onSuccess
 import com.google.android.gms.maps.CameraUpdate
@@ -33,9 +34,11 @@ class MapsViewModel(
     private val userSessionRepository: UserSessionRepository,
     private val mapsRepository: MapsRepository,
     private val syncGeofenceUseCase: SyncGeofenceUseCase,
+    private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
     private val getBusStopsUseCase: GetBusStopsUseCase,
-    private val getRouteInfoUseCase: GetRouteInfoUseCase,
-    private val mapsManager: MapsManager
+    private val startWaitingModeUseCase: StartWaitingModeUseCase,
+    private val startDrivingModeUseCase: StartDrivingModeUseCase,
+    private val stopWaitingModeUseCase: StopWaitingModeUseCase
 ) : ViewModel() {
 
     private val _cameraUpdateEvent = Channel<CameraUpdate>(Channel.BUFFERED)
@@ -46,7 +49,6 @@ class MapsViewModel(
 
     private var busStopOriginLocation = LatLng(0.0, 0.0)
     private var busStopDestinationLocation = LatLng(0.0, 0.0)
-    private var isServiceRunning = false
 
     init {
         viewModelScope.launch {
@@ -69,9 +71,7 @@ class MapsViewModel(
         }
 
         viewModelScope.launch {
-            _mapsUiState.update {
-                it.copy(busStops = getBusStopsUseCase())
-            }
+            _mapsUiState.update { it.copy(busStops = getBusStopsUseCase()) }
         }
 
         viewModelScope.launch {
@@ -85,15 +85,9 @@ class MapsViewModel(
                 when (event) {
                     ApplicationMode.IDLING -> Unit
                     ApplicationMode.WAITING -> Unit
-                    ApplicationMode.DRIVING -> startDrivingMode(mapsManager.getMapsApiKey())
+                    ApplicationMode.DRIVING -> startDrivingMode()
                     ApplicationMode.ARRIVING -> stopWaitingMode(true)
                 }
-            }
-        }
-
-        viewModelScope.launch {
-            mapsRepository.isServiceRunning.collect { isRunning ->
-                isServiceRunning = isRunning
             }
         }
     }
@@ -109,7 +103,7 @@ class MapsViewModel(
     }
 
     fun animateToUserLocation() {
-        mapsManager.getUserCurrentLocation { latLng ->
+        getCurrentLocationUseCase { latLng ->
             latLng?.let {
                 viewModelScope.launch {
                     val cameraUpdate = CameraUpdateFactory.newLatLngZoom(it, 16f)
@@ -121,32 +115,34 @@ class MapsViewModel(
 
     fun startWaitingMode(
         destinationName: String,
-        destinationLocation: LatLng,
-        apiKey: String
+        destinationLocation: LatLng
     ) {
-        _mapsUiState.update {
-            it.copy(
-                applicationMode = ApplicationMode.WAITING,
-                busStopDestinationName = destinationName
-            )
-        }
+        _mapsUiState.update { it.copy(routeInfo = UiState.Loading) }
         busStopDestinationLocation = destinationLocation
 
         viewModelScope.launch {
-            if (isServiceRunning) {
-                mapsRepository.sendCommandToService(ApplicationMode.IDLING)
-                delay(100)
-                mapsRepository.sendCommandToService(ApplicationMode.WAITING)
-            } else {
-                mapsManager.startLocationTrackingService()
-            }
-            delay(500)
-            if (isServiceRunning) {
-                getRouteInfo(busStopOriginLocation, apiKey)
-                delay(500)
-                if (_mapsUiState.value.routeInfo is UiState.Success) {
-                    mapsRepository.sendCommandToService(ApplicationMode.WAITING)
+            val result = startWaitingModeUseCase(
+                origin = busStopOriginLocation,
+                destination = busStopDestinationLocation,
+            )
+            if (result != null) {
+                result.onSuccess { (routeInfo, busStops) ->
+                    val routeInfoState = RouteInfoState(
+                        polylinePoints = routeInfo.polylinePoints,
+                        duration = routeInfo.duration,
+                        distance = routeInfo.distance
+                    )
+                    _mapsUiState.update {
+                        it.copy(
+                            applicationMode = ApplicationMode.WAITING,
+                            busStops = busStops,
+                            busStopDestinationName = destinationName,
+                            routeInfo = UiState.Success(routeInfoState)
+                        )
+                    }
                     animateToUserLocation()
+                }.onError { error ->
+                    _mapsUiState.update { it.copy(routeInfo = UiState.Error(error)) }
                 }
             } else {
                 _mapsUiState.update {
@@ -156,66 +152,56 @@ class MapsViewModel(
         }
     }
 
-    fun stopWaitingMode(isArriving : Boolean = false) {
+    private fun startDrivingMode() {
+        _mapsUiState.update { it.copy(routeInfo = UiState.Loading) }
+
         viewModelScope.launch {
+            val result = startDrivingModeUseCase(
+                origin = busStopOriginLocation,
+                destination = busStopDestinationLocation,
+            )
+            result.onSuccess { (routeInfo, busStops) ->
+                val routeInfoState = RouteInfoState(
+                    polylinePoints = routeInfo.polylinePoints,
+                    duration = routeInfo.duration,
+                    distance = routeInfo.distance
+                )
+                _mapsUiState.update {
+                    it.copy(
+                        applicationMode = ApplicationMode.DRIVING,
+                        busStops = busStops,
+                        routeInfo = UiState.Success(routeInfoState)
+                    )
+                }
+                animateToUserLocation()
+            }.onError { error ->
+                _mapsUiState.update { it.copy(routeInfo = UiState.Error(error)) }
+            }
+        }
+    }
+
+    fun stopWaitingMode(isArriving : Boolean = false) {
+        _mapsUiState.update { it.copy(routeInfo = UiState.Loading) }
+
+        viewModelScope.launch {
+            val busStops = stopWaitingModeUseCase()
             _mapsUiState.update {
                 it.copy(
-                    applicationMode = if (isArriving) ApplicationMode.ARRIVING else
-                        ApplicationMode.IDLING,
+                    applicationMode = if (isArriving) {
+                        ApplicationMode.ARRIVING
+                    } else {
+                        ApplicationMode.IDLING
+                    },
                     routeInfo = UiState.Empty,
-                    busStops = getBusStopsUseCase()
+                    busStops = busStops
                 )
             }
-            mapsManager.stopLocationTrackingService()
             animateToUserLocation()
 
             if (isArriving) {
                 delay(3000)
                 _mapsUiState.update { it.copy(applicationMode = ApplicationMode.IDLING) }
             }
-        }
-    }
-
-    private fun startDrivingMode(apiKey: String) {
-        _mapsUiState.update { it.copy(applicationMode = ApplicationMode.DRIVING) }
-
-        viewModelScope.launch {
-            getRouteInfo(busStopDestinationLocation, apiKey)
-            delay(500)
-            if (_mapsUiState.value.routeInfo is UiState.Success) {
-                mapsRepository.sendCommandToService(ApplicationMode.DRIVING)
-                animateToUserLocation()
-            }
-        }
-    }
-
-    private fun getRouteInfo(destination: LatLng, apiKey: String) {
-        _mapsUiState.update {
-            it.copy(routeInfo = UiState.Loading)
-        }
-
-        viewModelScope.launch {
-            getRouteInfoUseCase(destination, apiKey)
-                .onSuccess { data ->
-                    val routeInfoState = RouteInfoState(
-                        polylinePoints = data.polylinePoints,
-                        duration = data.duration,
-                        distance = data.distance
-                    )
-                    _mapsUiState.update {
-                        it.copy(
-                            routeInfo = UiState.Success(routeInfoState),
-                            busStops = getBusStopsUseCase { location ->
-                                val origin = busStopOriginLocation
-                                val destination = busStopDestinationLocation
-                                (location.distanceTo(origin) < 1.0) || (location.distanceTo(destination) < 1.0)
-                            }
-                        )
-                    }
-                }
-                .onError { error ->
-                    _mapsUiState.update { it.copy(routeInfo = UiState.Error(error)) }
-                }
         }
     }
 }
@@ -228,7 +214,6 @@ data class MapsUiState(
     val busStopDestinationName: String = "",
     val routeInfo: UiState<RouteInfoState> = UiState.Empty
 )
-
 
 data class RouteInfoState(
     val polylinePoints: List<LatLng> = emptyList(),

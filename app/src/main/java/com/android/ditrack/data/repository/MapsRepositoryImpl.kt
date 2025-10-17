@@ -7,9 +7,9 @@ import com.android.ditrack.domain.model.RouteInfo
 import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.feature.utils.DataDummyProvider
-import com.android.ditrack.ui.feature.utils.MapsManager
 import com.android.ditrack.ui.feature.utils.NetworkErrorType
 import com.android.ditrack.ui.feature.utils.Result
+import com.google.maps.android.ktx.utils.toLatLngList
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.network.sockets.SocketTimeoutException
@@ -20,8 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.SerializationException
 
 class MapsRepositoryImpl(
-    private val client: HttpClient,
-    private val mapsManager: MapsManager
+    private val client: HttpClient
 ) : MapsRepository {
 
     private val _isServiceRunning = MutableStateFlow(false)
@@ -95,7 +94,7 @@ class MapsRepositoryImpl(
     private fun DirectionsResponse.toDomain(): RouteInfo? {
         val route = this.routes.firstOrNull() ?: return null
 
-        val points = mapsManager.decodePolyLine(route.overviewPolyline.points)
+        val points = route.overviewPolyline.points.toLatLngList()
         val duration = route.legs.firstOrNull()?.duration?.text ?: ""
         val distance = route.legs.firstOrNull()?.distance?.text ?: ""
 

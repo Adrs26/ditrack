@@ -1,18 +1,19 @@
 package com.android.ditrack.domain.usecase
 
+import android.location.Location
 import com.android.ditrack.data.datastore.GeofenceTransition
 import com.android.ditrack.domain.repository.UserSessionRepository
 import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.feature.utils.DataDummyProvider
-import com.android.ditrack.ui.feature.utils.MapsManager
+import com.android.ditrack.data.manager.MapsManager
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 class SyncGeofenceUseCase(
+    private val mapsManager: MapsManager,
     private val userSessionRepository: UserSessionRepository,
-    private val mapsManager: MapsManager
 ) {
     suspend operator fun invoke() {
         val savedBusStop = userSessionRepository.getBusStopId().first()
@@ -75,12 +76,23 @@ class SyncGeofenceUseCase(
         userLatLng: LatLng,
         busStop: BusStopDummy
     ): Boolean {
-        val distance = mapsManager.calculateHaversine(
+        val distance = calculateHaversine(
             userLat = userLatLng.latitude,
             userLng = userLatLng.longitude,
             busStopLat = busStop.latLng.latitude,
             busStopLng = busStop.latLng.longitude
         )
         return distance <= 100f
+    }
+
+    private fun calculateHaversine(
+        userLat: Double,
+        userLng: Double,
+        busStopLat: Double,
+        busStopLng: Double
+    ): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(userLat, userLng, busStopLat, busStopLng, results)
+        return results[0]
     }
 }

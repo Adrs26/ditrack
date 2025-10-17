@@ -1,4 +1,4 @@
-package com.android.ditrack.ui.feature.utils
+package com.android.ditrack.data.manager
 
 import android.Manifest
 import android.app.PendingIntent
@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import com.android.ditrack.R
 import com.android.ditrack.receiver.GeofenceBroadcastReceiver
 import com.android.ditrack.service.LocationTrackingService
+import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
@@ -99,41 +100,6 @@ class MapsManager(
 
     fun getMapsApiKey() = context.getString(R.string.maps_api_key)
 
-    fun decodePolyLine(encoded: String): List<LatLng> {
-        val poly = ArrayList<LatLng>()
-        var index = 0
-        val len = encoded.length
-        var lat = 0
-        var lng = 0
-
-        while (index < len) {
-            var b: Int
-            var shift = 0
-            var result = 0
-            do {
-                b = encoded[index++].code - 63
-                result = result or ((b and 0x1f) shl shift)
-                shift += 5
-            } while (b >= 0x20)
-            val dlat = if ((result and 1) != 0) (result.inv() shr 1) else (result shr 1)
-            lat += dlat
-
-            shift = 0
-            result = 0
-            do {
-                b = encoded[index++].code - 63
-                result = result or ((b and 0x1f) shl shift)
-                shift += 5
-            } while (b >= 0x20)
-            val dlng = if ((result and 1) != 0) (result.inv() shr 1) else (result shr 1)
-            lng += dlng
-
-            val latLng = LatLng(lat / 1e5, lng / 1e5)
-            poly.add(latLng)
-        }
-        return poly
-    }
-
     fun startLocationTrackingService() {
         val serviceIntent = Intent(context, LocationTrackingService::class.java)
         ContextCompat.startForegroundService(context, serviceIntent)
@@ -158,17 +124,6 @@ class MapsManager(
         } catch (_: Exception) {
             null
         }
-    }
-
-    fun calculateHaversine(
-        userLat: Double,
-        userLng: Double,
-        busStopLat: Double,
-        busStopLng: Double
-    ): Float {
-        val results = FloatArray(1)
-        Location.distanceBetween(userLat, userLng, busStopLat, busStopLng, results)
-        return results[0]
     }
 
     fun findNearestPointIndex(current: LatLng, points: List<LatLng>): Int {

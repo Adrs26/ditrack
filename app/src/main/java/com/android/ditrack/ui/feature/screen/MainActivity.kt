@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.android.ditrack.R
 import com.android.ditrack.ui.feature.utils.NotificationUtil
 import com.android.ditrack.ui.theme.DitrackTheme
 import com.google.android.gms.maps.model.LatLng
@@ -42,8 +41,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         viewModel.startWaitingMode(
                             destinationName = destinationName,
-                            destinationLocation = destinationLocation,
-                            apiKey = getString(R.string.maps_api_key)
+                            destinationLocation = destinationLocation
                         )
                     }
 
