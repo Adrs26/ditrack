@@ -42,7 +42,7 @@ import com.android.ditrack.ui.theme.Charcoal
 @Composable
 fun SheetMainInformationContent(
     applicationMode: ApplicationMode,
-    duration: String,
+    duration: Int,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -64,7 +64,7 @@ fun SheetMainInformationContent(
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
             )
             Text(
-                text = duration,
+                text = "$duration menit",
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 14.sp)
             )
         }

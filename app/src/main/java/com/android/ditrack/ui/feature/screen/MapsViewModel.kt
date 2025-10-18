@@ -217,6 +217,6 @@ data class MapsUiState(
 
 data class RouteInfoState(
     val polylinePoints: List<LatLng> = emptyList(),
-    val duration: String = "",
-    val distance: String = ""
+    val duration: Int = 0,
+    val distance: Double = 0.0
 )

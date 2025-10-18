@@ -24,13 +24,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.ditrack.domain.model.ApplicationMode
+import java.util.Locale
 
 @Composable
 fun SheetRouteInformationContent(
     applicationMode: ApplicationMode,
     originName: String,
     destinationName: String,
-    distance: String,
+    distance: Double,
     onChangeDestination: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -81,7 +82,7 @@ fun SheetRouteInformationContent(
                     )
             ) {
                 Text(
-                    text = distance,
+                    text = "${String.format(Locale.US, "%.1f", distance)} km",
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.bodyLarge.copy(fontSize = 12.sp)
                 )

@@ -2,10 +2,10 @@ package com.android.ditrack.domain.usecase
 
 import android.location.Location
 import com.android.ditrack.data.datastore.GeofenceTransition
+import com.android.ditrack.data.manager.MapsManager
+import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.domain.repository.UserSessionRepository
 import com.android.ditrack.ui.feature.utils.BusStopDummy
-import com.android.ditrack.ui.feature.utils.DataDummyProvider
-import com.android.ditrack.data.manager.MapsManager
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -14,11 +14,12 @@ import kotlinx.coroutines.withContext
 class SyncGeofenceUseCase(
     private val mapsManager: MapsManager,
     private val userSessionRepository: UserSessionRepository,
+    private val mapsRepository: MapsRepository
 ) {
     suspend operator fun invoke() {
         val savedBusStop = userSessionRepository.getBusStopId().first()
         val localBusStops = userSessionRepository.getBusStopIds().first()
-        val remoteBusStops = DataDummyProvider.getBusStops().map { it.id }
+        val remoteBusStops = mapsRepository.getAllBusStops().map { it.id }
 
         if (localBusStops != remoteBusStops) {
             val toRemove = localBusStops - remoteBusStops
@@ -27,7 +28,7 @@ class SyncGeofenceUseCase(
             mapsManager.removeGeofences(toRemove)
 
             if (toAdd.isNotEmpty()) {
-                val busStopsToAdd = DataDummyProvider.getBusStops().filter { it.id in toAdd }
+                val busStopsToAdd = mapsRepository.getAllBusStops().filter { it.id in toAdd }
                 mapsManager.addGeofences(busStopsToAdd)
             }
 
@@ -40,7 +41,7 @@ class SyncGeofenceUseCase(
             }
         }
 
-        val (isInside, busStop) = getCurrentGeofenceStatus(DataDummyProvider.getBusStops())
+        val (isInside, busStop) = getCurrentGeofenceStatus(mapsRepository.getAllBusStops())
         if (isInside) {
             userSessionRepository.setGeofenceTransition(GeofenceTransition.ENTER)
             userSessionRepository.setBusStopId(busStop.id)

@@ -25,8 +25,8 @@ fun SheetContent(
     applicationMode: ApplicationMode,
     originName: String,
     destinationName: String,
-    duration: String,
-    distance: String,
+    duration: Int,
+    distance: Double,
     onExitWaiting: () -> Unit,
     onChangeDestination: () -> Unit,
     modifier: Modifier = Modifier

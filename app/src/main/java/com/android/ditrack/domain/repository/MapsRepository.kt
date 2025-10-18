@@ -5,6 +5,7 @@ import com.android.ditrack.domain.model.RouteInfo
 import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.feature.utils.NetworkErrorType
 import com.android.ditrack.ui.feature.utils.Result
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.StateFlow
 
 interface MapsRepository {
@@ -22,8 +23,11 @@ interface MapsRepository {
     suspend fun getRouteDirections(
         origin: String,
         destination: String,
+        waypoints: String?,
         apiKey: String
     ): Result<RouteInfo, NetworkErrorType>
 
     fun getAllBusStops(): List<BusStopDummy>
+
+    fun getRoutePoints(): List<LatLng>
 }

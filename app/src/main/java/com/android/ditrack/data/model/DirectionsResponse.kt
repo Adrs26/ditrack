@@ -28,10 +28,10 @@ data class Leg(
 
 @Serializable
 data class Duration(
-    val text: String
+    val value: Int
 )
 
 @Serializable
 data class Distance(
-    val text: String
+    val value: Int
 )

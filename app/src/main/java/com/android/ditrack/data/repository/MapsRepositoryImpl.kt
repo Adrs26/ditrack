@@ -9,6 +9,7 @@ import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.feature.utils.DataDummyProvider
 import com.android.ditrack.ui.feature.utils.NetworkErrorType
 import com.android.ditrack.ui.feature.utils.Result
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.ktx.utils.toLatLngList
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -18,6 +19,7 @@ import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.SerializationException
+import kotlin.math.round
 
 class MapsRepositoryImpl(
     private val client: HttpClient
@@ -47,6 +49,7 @@ class MapsRepositoryImpl(
     override suspend fun getRouteDirections(
         origin: String,
         destination: String,
+        waypoints: String?,
         apiKey: String
     ): Result<RouteInfo, NetworkErrorType> {
         return try {
@@ -54,6 +57,7 @@ class MapsRepositoryImpl(
                 url {
                     parameters.append("origin", origin)
                     parameters.append("destination", destination)
+                    if (waypoints != null) parameters.append("waypoints", waypoints)
                     parameters.append("key", apiKey)
                 }
             }
@@ -91,17 +95,26 @@ class MapsRepositoryImpl(
         return DataDummyProvider.getBusStops()
     }
 
+    override fun getRoutePoints(): List<LatLng> {
+        return DataDummyProvider.getRoutePoints()
+    }
+
     private fun DirectionsResponse.toDomain(): RouteInfo? {
         val route = this.routes.firstOrNull() ?: return null
 
         val points = route.overviewPolyline.points.toLatLngList()
-        val duration = route.legs.firstOrNull()?.duration?.text ?: ""
-        val distance = route.legs.firstOrNull()?.distance?.text ?: ""
+        var totalDurationSeconds = 0
+        var totalDistanceMeters = 0
+
+        for (leg in route.legs) {
+            totalDurationSeconds += leg.duration.value
+            totalDistanceMeters += leg.distance.value
+        }
 
         return RouteInfo(
             polylinePoints = points,
-            duration = duration,
-            distance = distance
+            duration = round(totalDurationSeconds / 60.0).toInt(),
+            distance = totalDistanceMeters / 1000.0
         )
     }
 }

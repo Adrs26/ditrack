@@ -4,6 +4,6 @@ import com.google.android.gms.maps.model.LatLng
 
 data class RouteInfo(
     val polylinePoints: List<LatLng>,
-    val duration: String,
-    val distance: String
+    val duration: Int,
+    val distance: Double
 )
