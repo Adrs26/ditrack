@@ -18,11 +18,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.android.ditrack.R
-import com.android.ditrack.domain.model.ApplicationMode
+import com.android.ditrack.domain.common.ApplicationModeState
 
 @Composable
 fun SheetContent(
-    applicationMode: ApplicationMode,
+    applicationModeState: ApplicationModeState,
     originName: String,
     destinationName: String,
     duration: Int,
@@ -36,14 +36,14 @@ fun SheetContent(
     ) {
         SheetMainInformationContent(
             duration = duration,
-            applicationMode = applicationMode
+            applicationModeState = applicationModeState
         )
         HorizontalDivider(
             modifier = Modifier.fillMaxWidth(),
             thickness = 1.dp,
             color = MaterialTheme.colorScheme.tertiary
         )
-        if (applicationMode == ApplicationMode.WAITING) {
+        if (applicationModeState == ApplicationModeState.Wait) {
             SheetBusInformationContent(
                 modifier = Modifier.padding(vertical = 24.dp)
             )
@@ -59,14 +59,14 @@ fun SheetContent(
                 .padding(vertical = 24.dp, horizontal = 8.dp)
         ) {
             SheetRouteInformationContent(
-                applicationMode = applicationMode,
+                applicationModeState = applicationModeState,
                 originName = originName,
                 destinationName = destinationName,
                 distance = distance,
                 onChangeDestination = onChangeDestination,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
-            if (applicationMode == ApplicationMode.WAITING) {
+            if (applicationModeState == ApplicationModeState.Wait) {
                 OutlinedButton(
                     onClick = onExitWaiting,
                     modifier = Modifier.fillMaxWidth(),

@@ -10,8 +10,6 @@
     <string name="serialization_error">Serialization error</string>
     <string name="no_route_found">No route found</string>
     <string name="unknown_error">Unknown error</string>
-    <string name="finish_trip">Selesaikan perjalanan</string>
-    <string name="enter_driving_mode">Masuk ke mode naik bus</string>
     <string name="exit_waiting_mode">Keluar dari mode menunggu bus</string>
     <string name="bus_has_arrived">Bus telah sampai</string>
     <string name="enter_driving_mode_confirmation">Bus kamu telah sampai di %1$s. Kamu akan otomatis dialihkan ke mode naik bus</string>
@@ -19,4 +17,8 @@
     <string name="bus_stop_detected">Halte terdeteksi</string>
     <string name="enter_waiting_mode_confirmation">Posisi kamu berada di area %1$s. Ingin menunggu di halte ini?</string>
     <string name="feature_only_available_at_the_bus_stop_area">Fitur hanya bisa digunakan ketika berada di area halte</string>
+    <string name="processing_route_data">Memproses data rute…</string>
+    <string name="number_plate">Plat nomor</string>
+    <string name="seat_filled">Kursi terisi</string>
+    <string name="seat_available">Kursi tersedia</string>
 </resources>

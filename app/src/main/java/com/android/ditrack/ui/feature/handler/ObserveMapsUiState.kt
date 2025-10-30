@@ -3,8 +3,8 @@ package com.android.ditrack.ui.feature.handler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import com.android.ditrack.data.datastore.GeofenceTransition
-import com.android.ditrack.domain.model.ApplicationMode
+import com.android.ditrack.domain.common.ApplicationModeState
+import com.android.ditrack.domain.common.GeofenceTransitionState
 import com.android.ditrack.ui.common.UiState
 import com.android.ditrack.ui.feature.components.MapsDialogState
 import com.android.ditrack.ui.feature.screen.MapsUiState
@@ -22,10 +22,10 @@ fun ObserveMapsUiState(
 ) {
     val context = LocalContext.current
 
-    LaunchedEffect(mapsUiState.geofenceTransition) {
+    LaunchedEffect(mapsUiState.geofenceTransitionState) {
         if (
-            mapsUiState.geofenceTransition == GeofenceTransition.ENTER &&
-            mapsUiState.applicationMode == ApplicationMode.IDLING
+            mapsUiState.geofenceTransitionState == GeofenceTransitionState.Enter &&
+            mapsUiState.applicationModeState == ApplicationModeState.Idle
         ) {
             delay(5000)
             onShowDialog(MapsDialogState.BusStopNearbyConfirmation)
@@ -45,8 +45,8 @@ fun ObserveMapsUiState(
                 onToggleSheet(false)
             }
             is UiState.Success -> {
-                when (mapsUiState.applicationMode) {
-                    ApplicationMode.DRIVING -> {
+                when (mapsUiState.applicationModeState) {
+                    ApplicationModeState.Drive -> {
                         onShowDialog(MapsDialogState.BusArriveToOriginInformation)
                     }
                     else -> onShowDialog(MapsDialogState.None)
@@ -55,8 +55,8 @@ fun ObserveMapsUiState(
                 onGetRouteInfo(routeInfo.data)
             }
             else -> {
-                when (mapsUiState.applicationMode) {
-                    ApplicationMode.ARRIVING -> {
+                when (mapsUiState.applicationModeState) {
+                    ApplicationModeState.Arrive -> {
                         onShowDialog(MapsDialogState.BusArriveToDestinationInformation)
                     }
                     else -> onShowDialog(MapsDialogState.None)

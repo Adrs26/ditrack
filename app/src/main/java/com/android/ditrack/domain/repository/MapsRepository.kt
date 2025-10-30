@@ -1,24 +1,24 @@
 package com.android.ditrack.domain.repository
 
-import com.android.ditrack.domain.model.ApplicationMode
+import com.android.ditrack.domain.common.ApplicationModeState
+import com.android.ditrack.domain.common.NetworkErrorType
+import com.android.ditrack.domain.common.Result
+import com.android.ditrack.domain.model.Coordinate
 import com.android.ditrack.domain.model.RouteInfo
 import com.android.ditrack.ui.feature.utils.BusStopDummy
-import com.android.ditrack.ui.feature.utils.NetworkErrorType
-import com.android.ditrack.ui.feature.utils.Result
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.StateFlow
 
 interface MapsRepository {
 
     val isServiceRunning: StateFlow<Boolean>
-    val event: StateFlow<ApplicationMode>
-    val command: StateFlow<ApplicationMode>
+    val event: StateFlow<ApplicationModeState>
+    val command: StateFlow<ApplicationModeState>
 
     fun setServiceRunning(isServiceRunning: Boolean)
 
-    suspend fun sendEventFromService(event: ApplicationMode)
+    suspend fun sendEventFromService(event: ApplicationModeState)
 
-    suspend fun sendCommandToService(command: ApplicationMode)
+    suspend fun sendCommandToService(command: ApplicationModeState)
 
     suspend fun getRouteDirections(
         origin: String,
@@ -29,5 +29,5 @@ interface MapsRepository {
 
     fun getAllBusStops(): List<BusStopDummy>
 
-    fun getRoutePoints(): List<LatLng>
+    fun getRoutePoints(): List<Coordinate>
 }

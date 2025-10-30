@@ -1,6 +1,6 @@
 package com.android.ditrack.ui.common
 
-import com.android.ditrack.ui.feature.utils.NetworkErrorType
+import com.android.ditrack.domain.common.NetworkErrorType
 
 sealed class UiState<out T> {
     data object Empty : UiState<Nothing>()

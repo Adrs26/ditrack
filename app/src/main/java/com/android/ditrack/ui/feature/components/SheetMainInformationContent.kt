@@ -35,13 +35,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.ditrack.domain.model.ApplicationMode
+import com.android.ditrack.domain.common.ApplicationModeState
 import com.android.ditrack.ui.theme.Blue800
 import com.android.ditrack.ui.theme.Charcoal
 
 @Composable
 fun SheetMainInformationContent(
-    applicationMode: ApplicationMode,
+    applicationModeState: ApplicationModeState,
     duration: Int,
     modifier: Modifier = Modifier
 ) {
@@ -77,7 +77,7 @@ fun SheetMainInformationContent(
         ) {
             ApplicationModeIcon(
                 icon = Icons.AutoMirrored.Filled.DirectionsWalk,
-                applicationMode = applicationMode
+                applicationModeState = applicationModeState
             )
             LinearProgress(
                 status = 2,
@@ -85,28 +85,28 @@ fun SheetMainInformationContent(
             )
             ApplicationModeIcon(
                 icon = Icons.Default.DepartureBoard,
-                applicationMode = applicationMode
+                applicationModeState = applicationModeState
             )
             LinearProgress(
-                status = if (applicationMode == ApplicationMode.WAITING) 3 else 2,
+                status = if (applicationModeState == ApplicationModeState.Wait) 3 else 2,
                 modifier = Modifier.weight(1f)
             )
             ApplicationModeIcon(
                 icon = Icons.Default.DirectionsBus,
-                applicationMode = applicationMode
+                applicationModeState = applicationModeState
             )
             LinearProgress(
-                status = when (applicationMode) {
-                    ApplicationMode.IDLING -> 1
-                    ApplicationMode.WAITING -> 1
-                    ApplicationMode.DRIVING -> 3
-                    ApplicationMode.ARRIVING -> 2
+                status = when (applicationModeState) {
+                    ApplicationModeState.Idle -> 1
+                    ApplicationModeState.Wait -> 1
+                    ApplicationModeState.Drive -> 3
+                    ApplicationModeState.Arrive -> 2
                 },
                 modifier = Modifier.weight(1f)
             )
             ApplicationModeIcon(
                 icon = Icons.Default.Store,
-                applicationMode = applicationMode
+                applicationModeState = applicationModeState
             )
         }
     }
@@ -115,7 +115,7 @@ fun SheetMainInformationContent(
 @Composable
 private fun ApplicationModeIcon(
     icon: ImageVector,
-    applicationMode: ApplicationMode,
+    applicationModeState: ApplicationModeState,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -124,7 +124,7 @@ private fun ApplicationModeIcon(
             .drawBehind {
                 val strokeWidth = 1.dp.toPx()
                 drawCircle(
-                    color = changeIconColor(icon, applicationMode),
+                    color = changeIconColor(icon, applicationModeState),
                     radius = size.minDimension / 2 - strokeWidth / 2,
                     style = Stroke(width = strokeWidth)
                 )
@@ -135,9 +135,9 @@ private fun ApplicationModeIcon(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
-            tint = changeIconColor(icon, applicationMode)
+            tint = changeIconColor(icon, applicationModeState)
         )
-        if (changeIconColor(icon, applicationMode) == MaterialTheme.colorScheme.primary) {
+        if (changeIconColor(icon, applicationModeState) == MaterialTheme.colorScheme.primary) {
             Icon(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
@@ -185,23 +185,23 @@ private fun LinearProgress(
 
 private fun changeIconColor(
     icon: ImageVector,
-    applicationMode: ApplicationMode
+    applicationModeState: ApplicationModeState
 ): Color {
     return when(icon) {
         Icons.Default.DirectionsBus -> {
-            when(applicationMode) {
-                ApplicationMode.IDLING -> Charcoal
-                ApplicationMode.WAITING -> Charcoal
-                ApplicationMode.DRIVING -> Blue800
-                ApplicationMode.ARRIVING -> Blue800
+            when(applicationModeState) {
+                ApplicationModeState.Idle -> Charcoal
+                ApplicationModeState.Wait -> Charcoal
+                ApplicationModeState.Drive -> Blue800
+                ApplicationModeState.Arrive -> Blue800
             }
         }
         Icons.Default.Store -> {
-            when(applicationMode) {
-                ApplicationMode.IDLING -> Charcoal
-                ApplicationMode.WAITING -> Charcoal
-                ApplicationMode.DRIVING -> Charcoal
-                ApplicationMode.ARRIVING -> Blue800
+            when(applicationModeState) {
+                ApplicationModeState.Idle -> Charcoal
+                ApplicationModeState.Wait -> Charcoal
+                ApplicationModeState.Drive -> Charcoal
+                ApplicationModeState.Arrive -> Blue800
             }
         }
         else -> Blue800

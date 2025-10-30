@@ -1,15 +1,19 @@
 package com.android.ditrack.domain.usecase
 
-import com.android.ditrack.data.manager.MapsManager
-import com.android.ditrack.domain.model.ApplicationMode
+import com.android.ditrack.domain.common.ApplicationModeState
+import com.android.ditrack.domain.common.NetworkErrorType
+import com.android.ditrack.domain.common.Result
+import com.android.ditrack.domain.manager.MapsManager
+import com.android.ditrack.domain.model.Coordinate
 import com.android.ditrack.domain.model.RouteInfo
 import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.ui.feature.utils.BusStopDummy
-import com.android.ditrack.ui.feature.utils.NetworkErrorType
-import com.android.ditrack.ui.feature.utils.Result
-import com.android.ditrack.ui.feature.utils.distanceTo
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.delay
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class StartWaitingModeUseCase(
     private val mapsManager: MapsManager,
@@ -18,20 +22,20 @@ class StartWaitingModeUseCase(
     private val getBusStopsUseCase: GetBusStopsUseCase
 ) {
     suspend operator fun invoke(
-        origin: LatLng,
-        destination: LatLng,
+        origin: Coordinate,
+        destination: Coordinate,
     ): Result<Pair<RouteInfo, List<BusStopDummy>>, NetworkErrorType>? {
         if (mapsRepository.isServiceRunning.value) {
-            mapsRepository.sendCommandToService(ApplicationMode.IDLING)
+            mapsRepository.sendCommandToService(ApplicationModeState.Idle)
             delay(500)
-            mapsRepository.sendCommandToService(ApplicationMode.WAITING)
+            mapsRepository.sendCommandToService(ApplicationModeState.Wait)
         } else {
             mapsManager.startLocationTrackingService()
         }
 
         delay(1000)
         return if (mapsRepository.isServiceRunning.value) {
-            mapsRepository.sendCommandToService(ApplicationMode.WAITING)
+            mapsRepository.sendCommandToService(ApplicationModeState.Wait)
 
             val routeInfo = getRouteInfoUseCase(
                 destination = origin,
@@ -47,5 +51,19 @@ class StartWaitingModeUseCase(
                 Result.Error((routeInfo as Result.Error).error)
             }
         } else { null }
+    }
+
+    fun Coordinate.distanceTo(other: Coordinate): Double {
+        val earthRadius = 6371000.0
+        val dLat = Math.toRadians(other.latitude - this.latitude)
+        val dLng = Math.toRadians(other.longitude - this.longitude)
+
+        val a = sin(dLat / 2).pow(2.0) +
+                cos(Math.toRadians(this.latitude)) *
+                cos(Math.toRadians(other.latitude)) *
+                sin(dLng / 2).pow(2.0)
+
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return earthRadius * c
     }
 }

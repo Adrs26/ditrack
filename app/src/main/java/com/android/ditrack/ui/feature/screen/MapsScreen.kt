@@ -27,7 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.android.ditrack.R
-import com.android.ditrack.data.datastore.GeofenceTransition
+import com.android.ditrack.domain.common.GeofenceTransitionState
 import com.android.ditrack.ui.feature.components.BusStopListContent
 import com.android.ditrack.ui.feature.components.DialogSection
 import com.android.ditrack.ui.feature.components.MapsContent
@@ -89,7 +89,7 @@ fun MapsScreen(
         BottomSheetScaffold(
             sheetContent = {
                 SheetContent(
-                    applicationMode = mapsUiState.applicationMode,
+                    applicationModeState = mapsUiState.applicationModeState,
                     originName = mapsUiState.busStopOriginName,
                     destinationName = mapsUiState.busStopDestinationName,
                     duration = routeInfoState.duration,
@@ -123,7 +123,7 @@ fun MapsScreen(
                 onBusMarkerClick = { dialogState = MapsDialogState.BusInformation },
                 onAnimateToMyLocationClick = mapsActions::onAnimateToUserLocation,
                 onStartTrackingClick = {
-                    if (mapsUiState.geofenceTransition == GeofenceTransition.ENTER) {
+                    if (mapsUiState.geofenceTransitionState == GeofenceTransitionState.Enter) {
                         isBusStopListVisible = true
                     } else {
                         context.getString(R.string.feature_only_available_at_the_bus_stop_area)

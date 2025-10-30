@@ -9,6 +9,9 @@ import android.location.Location
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.ditrack.R
+import com.android.ditrack.data.mapper.toCoordinate
+import com.android.ditrack.domain.manager.MapsManager
+import com.android.ditrack.domain.model.Coordinate
 import com.android.ditrack.receiver.GeofenceBroadcastReceiver
 import com.android.ditrack.service.LocationTrackingService
 import com.android.ditrack.ui.feature.utils.BusStopDummy
@@ -20,12 +23,12 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 
-class MapsManager(
+class MapsManagerImpl(
     private val context: Context,
     private val fusedLocationClient: FusedLocationProviderClient,
     private val geofencingClient: GeofencingClient,
-) {
-    fun getUserCurrentLocation(onResult: (LatLng?) -> Unit) {
+) : MapsManager {
+    override fun getUserCurrentLocation(onResult: (Coordinate?) -> Unit) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -35,14 +38,14 @@ class MapsManager(
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
-                onResult(LatLng(location.latitude, location.longitude))
+                onResult(LatLng(location.latitude, location.longitude).toCoordinate())
             } else {
                 onResult(null)
             }
         }
     }
 
-    fun addGeofences(busStops: List<BusStopDummy>) {
+    override fun addGeofences(busStops: List<BusStopDummy>) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -83,7 +86,7 @@ class MapsManager(
         geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
     }
 
-    fun removeGeofences(removeIds: List<Int>) {
+    override fun removeGeofences(removeIds: List<Int>) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -98,19 +101,34 @@ class MapsManager(
         }
     }
 
-    fun getMapsApiKey() = context.getString(R.string.maps_api_key)
+    override fun getMapsApiKey() = context.getString(R.string.maps_api_key)
 
-    fun startLocationTrackingService() {
+    override fun startLocationTrackingService() {
         val serviceIntent = Intent(context, LocationTrackingService::class.java)
         ContextCompat.startForegroundService(context, serviceIntent)
     }
 
-    fun stopLocationTrackingService() {
+    override fun stopLocationTrackingService() {
         val serviceIntent = Intent(context, LocationTrackingService::class.java)
         context.stopService(serviceIntent)
     }
 
-    fun getLastKnownLocation(): Location? {
+    override fun calculateHaversine(
+        startCoordinate: Coordinate,
+        endCoordinate: Coordinate
+    ): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(
+            startCoordinate.latitude,
+            startCoordinate.longitude,
+            endCoordinate.latitude,
+            endCoordinate.longitude,
+            results
+        )
+        return results[0]
+    }
+
+    override fun getLastKnownLocation(): Coordinate? {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -120,7 +138,7 @@ class MapsManager(
 
         val task: Task<Location> = fusedLocationClient.lastLocation
         return try {
-            Tasks.await(task)
+            Tasks.await(task).toCoordinate()
         } catch (_: Exception) {
             null
         }

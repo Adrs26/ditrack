@@ -1,10 +1,10 @@
 package com.android.ditrack.domain.usecase
 
+import com.android.ditrack.domain.common.NetworkErrorType
+import com.android.ditrack.domain.common.Result
+import com.android.ditrack.domain.model.Coordinate
 import com.android.ditrack.domain.model.RouteInfo
 import com.android.ditrack.domain.repository.MapsRepository
-import com.android.ditrack.ui.feature.utils.NetworkErrorType
-import com.android.ditrack.ui.feature.utils.Result
-import com.google.android.gms.maps.model.LatLng
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
@@ -15,10 +15,10 @@ class GetRouteInfoUseCase(
     private val mapsRepository: MapsRepository
 ) {
     suspend operator fun invoke(
-        destination: LatLng,
+        destination: Coordinate,
         apiKey: String
     ): Result<RouteInfo, NetworkErrorType> {
-        val origin = LatLng(-7.0550504, 110.4428640)
+        val origin = Coordinate(-7.0562216, 110.4400263)
         val originStr = "${origin.latitude},${origin.longitude}"
         val destinationStr = "${destination.latitude},${destination.longitude}"
         val sampledPoints = getWaypoints(
@@ -44,11 +44,11 @@ class GetRouteInfoUseCase(
     }
 
     private fun getWaypoints(
-        routePoints: List<LatLng>,
-        currentBusLocation: LatLng,
-        destinationLocation: LatLng,
+        routePoints: List<Coordinate>,
+        currentBusLocation: Coordinate,
+        destinationLocation: Coordinate,
         maxPoints: Int = 12
-    ): List<LatLng> {
+    ): List<Coordinate> {
         val busIndex = findClosestIndex(routePoints, currentBusLocation)
         val destIndex = findClosestIndex(routePoints, destinationLocation)
 
@@ -71,7 +71,7 @@ class GetRouteInfoUseCase(
         return selectedIndices.map { routePoints[it] }
     }
 
-    fun findClosestIndex(list: List<LatLng>, target: LatLng): Int {
+    private fun findClosestIndex(list: List<Coordinate>, target: Coordinate): Int {
         return list.indices.minByOrNull { index ->
             calculateDistance(
                 lat1 = list[index].latitude,
@@ -82,7 +82,7 @@ class GetRouteInfoUseCase(
         } ?: 0
     }
 
-    fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val r = 6371e3
         val phi1 = Math.toRadians(lat1)
         val phi2 = Math.toRadians(lat2)
@@ -94,7 +94,7 @@ class GetRouteInfoUseCase(
         return r * c
     }
 
-    fun convertToWaypointsParam(points: List<LatLng>): String {
+    private fun convertToWaypointsParam(points: List<Coordinate>): String {
         return points.joinToString("|") { "${it.latitude},${it.longitude}" }
     }
 }

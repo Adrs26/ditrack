@@ -73,7 +73,7 @@ fun MapsContent(
             }
 
             Marker(
-                state = rememberUpdatedMarkerState(LatLng(-7.0550504, 110.4428640)),
+                state = rememberUpdatedMarkerState(LatLng(-7.0562216, 110.4400263)),
                 icon = MarkerUtil.createBusMarker(context, R.drawable.ic_directions_bus),
                 onClick = {
                     onBusMarkerClick()

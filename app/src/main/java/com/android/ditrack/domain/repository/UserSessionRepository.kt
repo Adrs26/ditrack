@@ -1,18 +1,18 @@
 package com.android.ditrack.domain.repository
 
-import com.android.ditrack.data.datastore.GeofenceTransition
-import com.google.android.gms.maps.model.LatLng
+import com.android.ditrack.domain.common.GeofenceTransitionState
+import com.android.ditrack.domain.model.Coordinate
 import kotlinx.coroutines.flow.Flow
 
 interface UserSessionRepository {
 
-    fun getGeofenceTransition(): Flow<GeofenceTransition>
+    fun getGeofenceTransition(): Flow<GeofenceTransitionState>
     fun getBusStopId(): Flow<Int>
-    fun getBusStopLocation(): Flow<LatLng>
+    fun getBusStopLocation(): Flow<Coordinate>
     fun getBusStopIds(): Flow<List<Int>>
 
-    suspend fun setGeofenceTransition(transition: GeofenceTransition)
+    suspend fun setGeofenceTransition(transition: GeofenceTransitionState)
     suspend fun setBusStopId(id: Int)
-    suspend fun setBusStopLocation(location: LatLng)
+    suspend fun setBusStopLocation(location: Coordinate)
     suspend fun setBusStopIds(ids: List<Int>)
 }

@@ -1,12 +1,11 @@
 package com.android.ditrack.domain.usecase
 
-import android.location.Location
-import com.android.ditrack.data.datastore.GeofenceTransition
-import com.android.ditrack.data.manager.MapsManager
+import com.android.ditrack.domain.common.GeofenceTransitionState
+import com.android.ditrack.domain.manager.MapsManager
+import com.android.ditrack.domain.model.Coordinate
 import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.domain.repository.UserSessionRepository
 import com.android.ditrack.ui.feature.utils.BusStopDummy
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -35,21 +34,25 @@ class SyncGeofenceUseCase(
             userSessionRepository.setBusStopIds(remoteBusStops)
 
             if (savedBusStop in toRemove) {
-                userSessionRepository.setGeofenceTransition(GeofenceTransition.DEFAULT)
+                userSessionRepository.setGeofenceTransition(GeofenceTransitionState.Idle)
                 userSessionRepository.setBusStopId(-1)
-                userSessionRepository.setBusStopLocation(LatLng(0.0, 0.0))
+                userSessionRepository.setBusStopLocation(Coordinate(0.0, 0.0))
             }
         }
 
         val (isInside, busStop) = getCurrentGeofenceStatus(mapsRepository.getAllBusStops())
         if (isInside) {
-            userSessionRepository.setGeofenceTransition(GeofenceTransition.ENTER)
+            userSessionRepository.setGeofenceTransition(GeofenceTransitionState.Enter)
             userSessionRepository.setBusStopId(busStop.id)
-            userSessionRepository.setBusStopLocation(busStop.latLng)
+            userSessionRepository.setBusStopLocation(
+                Coordinate(busStop.latLng.latitude, busStop.latLng.longitude)
+            )
         } else {
-            userSessionRepository.setGeofenceTransition(GeofenceTransition.EXIT)
+            userSessionRepository.setGeofenceTransition(GeofenceTransitionState.Exit)
             userSessionRepository.setBusStopId(busStop.id)
-            userSessionRepository.setBusStopLocation(busStop.latLng)
+            userSessionRepository.setBusStopLocation(
+                Coordinate(busStop.latLng.latitude, busStop.latLng.longitude)
+            )
         }
     }
 
@@ -60,7 +63,7 @@ class SyncGeofenceUseCase(
             val location = mapsManager.getLastKnownLocation()
                 ?: return@withContext Pair(false, BusStopDummy())
 
-            val userLatLng = LatLng(location.latitude, location.longitude)
+            val userLatLng = Coordinate(location.latitude, location.longitude)
             val busStop = busStops.firstOrNull { isInsideGeofence(userLatLng, it) }
 
             if (busStop != null) {
@@ -74,26 +77,13 @@ class SyncGeofenceUseCase(
     }
 
     private fun isInsideGeofence(
-        userLatLng: LatLng,
+        userLatLng: Coordinate,
         busStop: BusStopDummy
     ): Boolean {
-        val distance = calculateHaversine(
-            userLat = userLatLng.latitude,
-            userLng = userLatLng.longitude,
-            busStopLat = busStop.latLng.latitude,
-            busStopLng = busStop.latLng.longitude
+        val distance = mapsManager.calculateHaversine(
+            startCoordinate = userLatLng,
+            endCoordinate = Coordinate(busStop.latLng.latitude, busStop.latLng.longitude)
         )
         return distance <= 100f
-    }
-
-    private fun calculateHaversine(
-        userLat: Double,
-        userLng: Double,
-        busStopLat: Double,
-        busStopLng: Double
-    ): Float {
-        val results = FloatArray(1)
-        Location.distanceBetween(userLat, userLng, busStopLat, busStopLng, results)
-        return results[0]
     }
 }

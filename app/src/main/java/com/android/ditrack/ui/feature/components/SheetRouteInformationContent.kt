@@ -23,19 +23,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.ditrack.domain.model.ApplicationMode
+import com.android.ditrack.domain.common.ApplicationModeState
 import java.util.Locale
 
 @Composable
 fun SheetRouteInformationContent(
-    applicationMode: ApplicationMode,
+    applicationModeState: ApplicationModeState,
     originName: String,
     destinationName: String,
     distance: Double,
     onChangeDestination: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val destinationModifier = if (applicationMode == ApplicationMode.WAITING) {
+    val destinationModifier = if (applicationModeState == ApplicationModeState.Wait) {
         Modifier
             .clickable { onChangeDestination() }
             .fillMaxWidth()
@@ -126,7 +126,7 @@ fun SheetRouteInformationContent(
                     .weight(1f),
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (applicationMode == ApplicationMode.WAITING) {
+            if (applicationModeState == ApplicationModeState.Wait) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Default.KeyboardArrowRight,
                     contentDescription = null,

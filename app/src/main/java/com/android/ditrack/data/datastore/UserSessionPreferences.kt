@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.android.ditrack.domain.common.GeofenceTransitionState
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
@@ -22,11 +23,11 @@ class UserSessionPreferences(private val context: Context) {
         private val BUS_STOP_IDS_KEY = stringPreferencesKey("bus_stop_ids")
     }
 
-    val geofenceTransition = context.dataStore.data.map { preferences ->
+    val geofenceTransitionState = context.dataStore.data.map { preferences ->
         when (preferences[GEOFENCE_TRANSITION_KEY]) {
-            GeofenceTransition.ENTER.name -> GeofenceTransition.ENTER
-            GeofenceTransition.EXIT.name -> GeofenceTransition.EXIT
-            else -> GeofenceTransition.DEFAULT
+            GeofenceTransitionState.Enter.toString() -> GeofenceTransitionState.Enter
+            GeofenceTransitionState.Exit.toString() -> GeofenceTransitionState.Exit
+            else -> GeofenceTransitionState.Idle
         }
     }
 
@@ -44,9 +45,9 @@ class UserSessionPreferences(private val context: Context) {
         }
     }
 
-    suspend fun setGeofenceTransition(transition: GeofenceTransition) {
+    suspend fun setGeofenceTransition(transition: GeofenceTransitionState) {
         context.dataStore.edit { preferences ->
-            preferences[GEOFENCE_TRANSITION_KEY] = transition.name
+            preferences[GEOFENCE_TRANSITION_KEY] = transition.toString()
         }
     }
 
@@ -68,8 +69,4 @@ class UserSessionPreferences(private val context: Context) {
             preferences[BUS_STOP_IDS_KEY] = Json.encodeToString(ids)
         }
     }
-}
-
-enum class GeofenceTransition {
-    DEFAULT, ENTER, EXIT
 }

@@ -1,15 +1,15 @@
 package com.android.ditrack.data.repository
 
-import android.util.Log
+import com.android.ditrack.data.mapper.toCoordinate
 import com.android.ditrack.data.model.DirectionsResponse
-import com.android.ditrack.domain.model.ApplicationMode
+import com.android.ditrack.domain.common.ApplicationModeState
+import com.android.ditrack.domain.common.NetworkErrorType
+import com.android.ditrack.domain.common.Result
+import com.android.ditrack.domain.model.Coordinate
 import com.android.ditrack.domain.model.RouteInfo
 import com.android.ditrack.domain.repository.MapsRepository
 import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.android.ditrack.ui.feature.utils.DataDummyProvider
-import com.android.ditrack.ui.feature.utils.NetworkErrorType
-import com.android.ditrack.ui.feature.utils.Result
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.ktx.utils.toLatLngList
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -28,21 +28,21 @@ class MapsRepositoryImpl(
     private val _isServiceRunning = MutableStateFlow(false)
     override val isServiceRunning = _isServiceRunning.asStateFlow()
 
-    private val _event = MutableStateFlow<ApplicationMode>(ApplicationMode.IDLING)
+    private val _event = MutableStateFlow<ApplicationModeState>(ApplicationModeState.Idle)
     override val event = _event.asStateFlow()
 
-    private val _command = MutableStateFlow<ApplicationMode>(ApplicationMode.IDLING)
+    private val _command = MutableStateFlow<ApplicationModeState>(ApplicationModeState.Idle)
     override val command = _command.asStateFlow()
 
     override fun setServiceRunning(isServiceRunning: Boolean) {
         _isServiceRunning.value = isServiceRunning
     }
 
-    override suspend fun sendEventFromService(event: ApplicationMode) {
+    override suspend fun sendEventFromService(event: ApplicationModeState) {
         _event.value = event
     }
 
-    override suspend fun sendCommandToService(command: ApplicationMode) {
+    override suspend fun sendCommandToService(command: ApplicationModeState) {
         _command.value = command
     }
 
@@ -65,7 +65,6 @@ class MapsRepositoryImpl(
             when (response.status.value) {
                 in 200..299 -> {
                     val directionsResponse = response.body<DirectionsResponse>()
-                    Log.d("MainRepositoryImpl", "getRouteDirections: $directionsResponse")
                     val routeInfo = directionsResponse.toDomain()
 
                     if (routeInfo != null) {
@@ -95,8 +94,8 @@ class MapsRepositoryImpl(
         return DataDummyProvider.getBusStops()
     }
 
-    override fun getRoutePoints(): List<LatLng> {
-        return DataDummyProvider.getRoutePoints()
+    override fun getRoutePoints(): List<Coordinate> {
+        return DataDummyProvider.getRoutePoints().map { it.toCoordinate() }
     }
 
     private fun DirectionsResponse.toDomain(): RouteInfo? {
@@ -112,7 +111,7 @@ class MapsRepositoryImpl(
         }
 
         return RouteInfo(
-            polylinePoints = points,
+            polylinePoints = points.map { it.toCoordinate() },
             duration = round(totalDurationSeconds / 60.0).toInt(),
             distance = totalDistanceMeters / 1000.0
         )
