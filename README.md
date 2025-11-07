@@ -1,6 +1,6 @@
 # 🚍 Ditrack – Campus Bus Tracking App (Ongoing)
 
-**Ditrack** is an Android application designed to track campus buses in real time and provide accurate estimated arrival times for students. The app integrates IoT-based microcontroller data, machine learning models, and backend services to deliver reliable and efficient transportation tracking within campus areas.
+**Ditrack** is an Android application designed to track **Diponegoro University** campus buses in real time and provide accurate estimated arrival times for students. The app integrates IoT-based microcontroller data, machine learning models, and backend services to deliver reliable and efficient transportation tracking within campus areas.
 
 ---
 
@@ -87,7 +87,7 @@ GitHub: [https://github.com/Adrs26/ditrack](https://github.com/Adrs26/ditrack)
 
 ---
 
-## 👨‍💻 Author
+## 👨‍💻 Android Developer
 
 **Adrian Septiyadi**  
 Final-year Computer Engineering Student, passionate about Android development.  
