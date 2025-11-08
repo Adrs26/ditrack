@@ -1,4 +1,4 @@
-package com.android.ditrack.service
+package com.android.ditrack.ui.service
 
 import android.Manifest
 import android.app.Notification
@@ -68,6 +68,7 @@ class LocationTrackingService : Service(), KoinComponent {
     override fun onDestroy() {
         currentJob?.cancel()
         serviceScope.cancel()
+        Log.d("LocationTrackingService", "Service destroyed")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {

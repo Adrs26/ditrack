@@ -1,6 +1,6 @@
 package com.android.ditrack.domain.usecase
 
-import com.android.ditrack.domain.common.NetworkErrorType
+import com.android.ditrack.domain.common.NetworkError
 import com.android.ditrack.domain.common.Result
 import com.android.ditrack.domain.model.Coordinate
 import com.android.ditrack.domain.model.RouteInfo
@@ -17,7 +17,7 @@ class GetRouteInfoUseCase(
     suspend operator fun invoke(
         destination: Coordinate,
         apiKey: String
-    ): Result<RouteInfo, NetworkErrorType> {
+    ): Result<RouteInfo, NetworkError> {
         val origin = Coordinate(-7.0562216, 110.4400263)
         val originStr = "${origin.latitude},${origin.longitude}"
         val destinationStr = "${destination.latitude},${destination.longitude}"

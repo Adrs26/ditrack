@@ -1,4 +1,4 @@
-package com.android.ditrack.receiver
+package com.android.ditrack.ui.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context

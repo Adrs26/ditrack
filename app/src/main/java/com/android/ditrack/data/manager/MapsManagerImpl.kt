@@ -12,8 +12,8 @@ import com.android.ditrack.R
 import com.android.ditrack.data.mapper.toCoordinate
 import com.android.ditrack.domain.manager.MapsManager
 import com.android.ditrack.domain.model.Coordinate
-import com.android.ditrack.receiver.GeofenceBroadcastReceiver
-import com.android.ditrack.service.LocationTrackingService
+import com.android.ditrack.ui.receiver.GeofenceBroadcastReceiver
+import com.android.ditrack.ui.service.LocationTrackingService
 import com.android.ditrack.ui.feature.utils.BusStopDummy
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence

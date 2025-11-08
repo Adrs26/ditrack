@@ -1,7 +1,7 @@
 package com.android.ditrack.domain.repository
 
 import com.android.ditrack.domain.common.ApplicationModeState
-import com.android.ditrack.domain.common.NetworkErrorType
+import com.android.ditrack.domain.common.NetworkError
 import com.android.ditrack.domain.common.Result
 import com.android.ditrack.domain.model.Coordinate
 import com.android.ditrack.domain.model.RouteInfo
@@ -25,7 +25,7 @@ interface MapsRepository {
         destination: String,
         waypoints: String?,
         apiKey: String
-    ): Result<RouteInfo, NetworkErrorType>
+    ): Result<RouteInfo, NetworkError>
 
     fun getAllBusStops(): List<BusStopDummy>
 

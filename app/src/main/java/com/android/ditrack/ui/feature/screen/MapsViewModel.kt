@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.ditrack.domain.common.ApplicationModeState
 import com.android.ditrack.domain.common.GeofenceTransitionState
-import com.android.ditrack.domain.common.NetworkErrorType
 import com.android.ditrack.domain.common.onError
 import com.android.ditrack.domain.common.onSuccess
 import com.android.ditrack.domain.model.Coordinate
@@ -126,29 +125,23 @@ class MapsViewModel(
                 origin = busStopOriginLocation.toCoordinate(),
                 destination = busStopDestinationLocation.toCoordinate(),
             )
-            if (result != null) {
-                result.onSuccess { (routeInfo, busStops) ->
-                    val routeInfoState = RouteInfoState(
-                        polylinePoints = routeInfo.polylinePoints.map { it.toLatLng() },
-                        duration = routeInfo.duration,
-                        distance = routeInfo.distance
-                    )
-                    _mapsUiState.update {
-                        it.copy(
-                            applicationModeState = ApplicationModeState.Wait,
-                            busStops = busStops,
-                            busStopDestinationName = destinationName,
-                            routeInfo = UiState.Success(routeInfoState)
-                        )
-                    }
-                    animateToUserLocation()
-                }.onError { error ->
-                    _mapsUiState.update { it.copy(routeInfo = UiState.Error(error)) }
-                }
-            } else {
+            result.onSuccess { (routeInfo, busStops) ->
+                val routeInfoState = RouteInfoState(
+                    polylinePoints = routeInfo.polylinePoints.map { it.toLatLng() },
+                    duration = routeInfo.duration,
+                    distance = routeInfo.distance
+                )
                 _mapsUiState.update {
-                    it.copy(routeInfo = UiState.Error(NetworkErrorType.REQUEST_TIMEOUT))
+                    it.copy(
+                        applicationModeState = ApplicationModeState.Wait,
+                        busStops = busStops,
+                        busStopDestinationName = destinationName,
+                        routeInfo = UiState.Success(routeInfoState)
+                    )
                 }
+                animateToUserLocation()
+            }.onError { error ->
+                _mapsUiState.update { it.copy(routeInfo = UiState.Error(error)) }
             }
         }
     }
@@ -161,7 +154,7 @@ class MapsViewModel(
                 origin = busStopOriginLocation.toCoordinate(),
                 destination = busStopDestinationLocation.toCoordinate(),
             )
-            result.onSuccess { (routeInfo, busStops) ->
+            result.onSuccess { routeInfo ->
                 val routeInfoState = RouteInfoState(
                     polylinePoints = routeInfo.polylinePoints.map { it.toLatLng() },
                     duration = routeInfo.duration,
@@ -170,7 +163,6 @@ class MapsViewModel(
                 _mapsUiState.update {
                     it.copy(
                         applicationModeState = ApplicationModeState.Drive,
-                        busStops = busStops,
                         routeInfo = UiState.Success(routeInfoState)
                     )
                 }

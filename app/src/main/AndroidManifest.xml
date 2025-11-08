@@ -34,9 +34,9 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/maps_api_key" />
 
-        <receiver android:name=".receiver.GeofenceBroadcastReceiver" />
+        <receiver android:name=".ui.receiver.GeofenceBroadcastReceiver" />
         <service
-            android:name=".service.LocationTrackingService"
+            android:name=".ui.service.LocationTrackingService"
             android:foregroundServiceType="location" />
     </application>
 
